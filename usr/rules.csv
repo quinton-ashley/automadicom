@@ -1,0 +1,2 @@
+"SeriesDescription", "$StudyDate.slice(0, 4) + $SeriesDescription.toLowerCase()"
+"PatientID", "$SeriesDescription"
