@@ -1,2 +1,2 @@
-"SeriesDescription", "$StudyDate.slice(0, 4) + $SeriesDescription.toLowerCase()"
-"PatientID", "$SeriesDescription"
+SeriesDescription; $FrameLaterality.slice(0,1) + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')
+PatientID; $SeriesDescription
