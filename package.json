@@ -1,24 +1,24 @@
 {
-  "name": "qtultra-anonDICOM",
-  "version": "v0.0.0",
-  "description": "Utility",
-  "main": "main.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "/Users/qashto/Dropbox/web/qtultra-anonDICOM/.git"
-  },
-  "author": "Quinton Ashley",
-  "license": "UNLICENSED",
-  "dependencies": {
-    "csv-string": "^2.3.2",
-    "dwv": "^0.19.2",
-    "fs-path": "0.0.23",
-    "glob": "^7.1.2",
-    "mv": "^2.1.1",
-    "node-cleanup": "^2.1.2",
-    "open": "0.0.5"
-  }
+	"name": "automaDICOM",
+	"version": "v0.0.0",
+	"description": "Utility",
+	"main": "main.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "/Users/qashto/Dropbox/web/automaDICOM/.git"
+	},
+	"author": "Quinton Ashley",
+	"license": "UNLICENSED",
+	"dependencies": {
+		"csv-string": "^2.3.2",
+		"dwv": "^0.19.2",
+		"fs-path": "0.0.23",
+		"glob": "^7.1.2",
+		"mv": "^2.1.1",
+		"node-cleanup": "^2.1.2",
+		"open": "0.0.5"
+	}
 }
