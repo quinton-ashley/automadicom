@@ -1,11 +1,12 @@
 # automaDICOM
 
+Automatic DICOM tag value editor that uses dynamically evaluated rules.  [Node.js](https://nodejs.org) is required to run this command line program.
 ```
 cd /pathOf/automaDICOM
 node main.js /pathTo/imagesDir/or/img.dcm usr/rules.csv /pathTo/outputDir usr/append.csv
 ```
 ### Input Directory Format
-Accepts either a single image or a directory with subdirectories that contain images.  By design the program will look in all subdirectories of the specified directory for images but does not look directly in the specified directory for images.
+Accepts either a single image or a directory with subdirectories that contain images.  By design the program will not look for images directly in the specified directory.
 ### Rules CSV Format
 ```javascript
 replaceValueOfThisTagWith; 'staticText'
@@ -14,7 +15,7 @@ thisTagToo; $dicomTagX + 'A1'
 anotherTag; 'prefix' + $dicomTagY.toLowerCase() + $dicomTagZ.slice(0,1)
 oneMoreTag; ( ($dicomTagZ.includes('Quinton Ashley')) ? 'author' : 'user' )
 ```
-The tag and the replacement value must be separated by semicolons.  This program dynamically evaluates the replacement values by using the `eval()` function.  If you aren't a Javascript programmer take a look at the powerful methods you can use from the [String object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) and learn about [ternary operators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_Operator)!  To request a tag value use a single dollar sign followed by the tag name.  If the tag has been modified by a preceding rule the tag's new value will be retrieved instead of the tag's original value.  Let's take a look at an example:
+For the rules file, write one rule per line.  The tag and it's replacement value must be separated by a semicolon.  This program dynamically evaluates the replacement values by using the `eval()` function.  If you aren't a Javascript programmer take a look at the powerful methods you can use from the [String object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) and learn about [ternary operators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_Operator)!  To request a tag value use a single dollar sign followed by the tag name.  If the tag has been modified by a preceding rule the tag's new value will be retrieved instead of the tag's original value.  Let's take a look at an example:
 ```javascript
 tag0; $tag1
 tag1; $tag1 + $tag55
