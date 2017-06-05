@@ -13,12 +13,13 @@ function automaDICOM() {
 	this.out = null;
 	this.append = null;
 	this.server = false;
+	this.verbose = false;
 	this.tags = [];
 	this.values = [];
 	this.newPaths = [];
 
-	this.help = (err) => {
-		console.log(err);
+	this.error = (err) => {
+		console.log('ERROR: ' + err);
 		process.exit(1);
 	}
 
@@ -50,8 +51,7 @@ function automaDICOM() {
 				}
 				// if it's still null it wasn't found
 				if (tag == null) {
-					console.log('ERROR: ' + tagReq + ' tag not found!!');
-					process.exit(1);
+					this.error(tagReq + ' tag not found!!');
 				}
 			} else {
 				// get the tag from the values array
@@ -67,6 +67,38 @@ function automaDICOM() {
 			str = eval(str);
 		} catch (err) {}
 		return str;
+	}
+
+	this.errorCheck = (tag, value) => {
+		switch (tag) {
+			case 'AcquisitionDate':
+			case 'ContentDate':
+			case 'InstanceCreationDate':
+			case 'PatientBirthDate':
+			case 'StudyDate':
+				if (typeof value !== 'number') {
+					this.error(`${tag} ${value}
+	Dates must be entered as a Number in the format YYYYMMDD`);
+				}
+				let d = value.toString();
+				let isYear = (parseInt(d.slice(0, 4)) >= 1970);
+				let isMonth = (parseInt(d.slice(4, 6)) <= 12);
+				let isDay = (parseInt(d.slice(6, 8)) <= 31);
+				if ((!isYear || !isMonth || !isDay)) {
+					this.error(`${tag} ${value}
+	Dates must be entered as a Number in the format YYYYMMDD`);
+				}
+			case 'AcquisitionTime':
+			case 'ContentTime':
+			case 'InstanceCreationTime':
+			case 'PatientBirthTime':
+			case 'StudyTime':
+				if (typeof value !== 'number') {
+					this.error(`${tag} ${value}
+	Times must be entered as a Number`);
+				}
+			default:
+		}
 	}
 
 	this.edit = (file, files) => {
@@ -91,6 +123,7 @@ function automaDICOM() {
 		// rule objects conforms to the format the DICOM writer expects
 		this.tags.forEach((tag, i) => {
 			values[i] = this.fulfillTagReqs(values[i], elements, values);
+			this.errorCheck(tag, values[i]);
 			rules[tag] = {
 				action: 'replace',
 				value: values[i]
@@ -142,9 +175,8 @@ function automaDICOM() {
 
 	this.setup = (err, files) => {
 		if (err || typeof files == 'undefined' || files.length == 0) {
-			console.log('invalid path, no files found');
-			console.log(err);
-			process.exit(1);
+			console.log('ERROR: invalid path, no files found');
+			this.error(err);
 		}
 		// read the rules file synchronously
 		this.rules = fs.readFileSync(this.rules, 'utf8');
@@ -162,7 +194,7 @@ function automaDICOM() {
 		for (let i = 0, file = ''; i < files.length; i++) {
 			file = files[i];
 			if (!fs.statSync(file).isDirectory()) {
-				if (!file.includes('.')) {
+				if (!/\.\D+/.exec(file)) {
 					fs.renameSync(file, file += '.dcm');
 				}
 				if (file.slice(file.length - 4, file.length) == '.dcm') {
@@ -174,18 +206,17 @@ function automaDICOM() {
 
 	this.run = () => {
 		if (this.in != null && this.rules != null) {
-			if (this.in.includes('.dcm')) {
-				this.anonymize(null, [this.in]);
+			// if the input path is a directory send it straight to the setup function
+			// else glob for leaves of the fs
+			if (!fs.statSync(this.in).isDirectory()) {
+				this.setup(null, [this.in]);
 			} else {
 				glob(this.in + '/**/*', this.setup);
 			}
 		} else {
-			this.help('required input and rules paths not entered');
+			this.error('required input and rules paths not entered');
 		}
 	}
 }
-
-// Notes:
-// error check for StudyDate and StudyTime
 
 module.exports = new automaDICOM();
