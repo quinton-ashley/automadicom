@@ -1,6 +1,15 @@
 # automaDICOM
 
-Automatic DICOM tag value editor that uses dynamically evaluated rules.  [Node.js](https://nodejs.org) is required to run this command line program.
+Automatic DICOM tag value editor that uses dynamically evaluated rules to modify DICOM tag values.  Click here to go to this app's Github page.
+### Requirements
+[Node.js](https://nodejs.org) is required to run this command line program.  Install the LTS version.  Then download this repository as a zip file or use git install.
+### Getting Started
+If you are on Windows open up PowerShell:
+```
+cd "\pathOf\automaDICOM"
+node main.js \pathTo\imagesDir\or\img.dcm usr\rules.csv \pathTo\outputDir usr\append.csv
+```
+If you are on Mac or Linux open up Terminal:
 ```
 cd /pathOf/automaDICOM
 node main.js /pathTo/imagesDir/or/img.dcm usr/rules.csv /pathTo/outputDir usr/append.csv

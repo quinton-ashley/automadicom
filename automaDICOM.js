@@ -13,7 +13,8 @@ function automaDICOM() {
 	this.out = null;
 	this.append = null;
 	this.server = false;
-	this.verbose = false;
+	this.verbose = true;
+	this.list = false;
 	this.tags = [];
 	this.values = [];
 	this.newPaths = [];
@@ -119,6 +120,7 @@ function automaDICOM() {
 				value: null
 			}
 		};
+		// a seperate copy of the values array must be used for each image
 		let values = this.values.slice();
 		// rule objects conforms to the format the DICOM writer expects
 		this.tags.forEach((tag, i) => {
@@ -139,7 +141,9 @@ function automaDICOM() {
 		let newPath = '';
 		if (this.out != null) {
 			dir = this.out;
-			console.log(values);
+			if (this.verbose) {
+				console.log(values);
+			}
 			for (i = 0; i < this.append.length - 1; i++) {
 				append += '/' + this.fulfillTagReqs(this.append[i][0], elements, values);
 			}
@@ -159,7 +163,9 @@ function automaDICOM() {
 			newPath = dir + imgName;
 		}
 		this.newPaths.push(newPath);
-		console.log(newPath);
+		if (this.verbose) {
+			console.log(newPath);
+		}
 
 
 		// writeFile can be used asynchronously here, this is advantageous
