@@ -206,10 +206,10 @@ function automaDICOM() {
 		for (let i = 0, file = ''; i < files.length; i++) {
 			file = files[i];
 			if (!fs.statSync(file).isDirectory()) {
-				if (!/\.\D+/.exec(file)) {
+				if (path.parse(file).ext == '') {
 					fs.renameSync(file, file += '.dcm');
 				}
-				if (file.slice(file.length - 4, file.length) == '.dcm') {
+				if (path.parse(file).ext == '.dcm') {
 					this.edit(file, files);
 				}
 			}
