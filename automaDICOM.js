@@ -78,12 +78,16 @@ function automaDICOM() {
 			case 'InstanceCreationDate':
 			case 'PatientBirthDate':
 			case 'StudyDate':
+				if (typeof value !== 'string') {
+					this.error(`${tag} ${value}
+	Dates must be entered as a String in the format 'YYYYMMDD'`);
+				}
 				let isYear = (parseInt(value.slice(0, 4)) >= 1900);
 				let isMonth = (parseInt(value.slice(4, 6)) <= 12);
 				let isDay = (parseInt(value.slice(6, 8)) <= 31);
 				if ((!isYear || !isMonth || !isDay)) {
 					this.error(`${tag} ${value}
-	Dates must be entered as a Number in the format YYYYMMDD`);
+	Dates must be entered as a String in the format 'YYYYMMDD'`);
 				}
 				break;
 			case 'AcquisitionTime':
@@ -194,7 +198,7 @@ function automaDICOM() {
 			this.tags.push(rule[0]);
 			this.values.push(rule[1]);
 		});
-		if (this.append != null) {
+		if (this.out != null) {
 			this.append = fs.readFileSync(this.append, 'utf8');
 			this.append = CSV.parse(this.append);
 		}
@@ -213,8 +217,9 @@ function automaDICOM() {
 	}
 
 	this.run = () => {
-		console.log('');
-		if (this.in != null && this.rules != null) {
+		if (this.in != null) {
+			console.log('');
+			console.log('input: ' + this.in);
 			// if the input path is a directory send it straight to the setup function
 			// else glob for leaves of the fs
 			if (!fs.statSync(this.in).isDirectory()) {
@@ -223,7 +228,7 @@ function automaDICOM() {
 				glob(this.in + path.sep + '**' + path.sep + '*', this.setup);
 			}
 		} else {
-			this.error('required input and rules paths not entered');
+			this.error('required input path not specified');
 		}
 	}
 }
