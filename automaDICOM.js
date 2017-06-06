@@ -166,7 +166,7 @@ function automaDICOM() {
 			dir = path.parse(file).dir;
 			// prepend anon_ to the file name
 			imgName = 'anon_' + path.parse(file).name + '.dcm';
-			newPath = dir + imgName;
+			newPath = dir + path.sep + imgName;
 		}
 		this.newPaths.push(newPath);
 		if (this.verbose) {
