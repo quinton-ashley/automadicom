@@ -45,17 +45,17 @@ If an output directory is specified the append CSV is used.  Just as in the rule
 ### Running the Script
 The command line programs Git Bash, Terminal, and PowerShell are able to write the path names for you if you drag and drop a file or folder onto their window.  This will save you a lot of time!  The `cd` command means change directory.  The `node` command runs node.js scripts.  
 If you are on Windows open up Git Bash and use this format:
-```javascript
+```
 cd '/c/pathOf/automaDICOM/'
 node 'main.js' '/c/pathTo/imagesDir/or/img.dcm' '/c/optionalPathTo/outputDir'
 ```
 If you are on Windows and don't have git open up PowerShell and use this format:
-```javascript
+```
 cd "C:\pathOf\automaDICOM"
 node "main.js" "C:\pathTo\imagesDir\or\img.dcm" "C:\optionalPathTo\outputDir"
 ```
 If you are on Mac or Linux open up Terminal and use this format:
-```javascript
+```
 cd '/pathOf/automaDICOM/'
 node 'main.js' '/pathTo/imagesDir/or/img.dcm' '/optionalPathTo/outputDir'
 ```
