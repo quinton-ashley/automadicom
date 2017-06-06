@@ -163,7 +163,7 @@ function automaDICOM() {
 			}
 		} else {
 			// get the directory of the file
-			dir = path.parse(file).name;
+			dir = path.parse(file).dir;
 			// prepend anon_ to the file name
 			imgName = 'anon_' + path.parse(file).name + '.dcm';
 			newPath = dir + imgName;
