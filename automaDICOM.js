@@ -163,9 +163,9 @@ function automaDICOM() {
 			}
 		} else {
 			// get the directory of the file
-			dir = file.slice(0, file.lastIndexOf(path.sep) + 1);
+			dir = path.parse(file).name;
 			// prepend anon_ to the file name
-			imgName = 'anon_' + file.slice(file.lastIndexOf(path.sep) + 1, file.length);
+			imgName = 'anon_' + path.parse(file).name + '.dcm';
 			newPath = dir + imgName;
 		}
 		this.newPaths.push(newPath);
