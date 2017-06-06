@@ -1,17 +1,18 @@
 const CSV = require('csv-string'); // open source csv parser and stringifier
 const dwv = require('dwv'); // open source DICOM parser, viewer, and writer
-const fs = require('fs'); // node.js file system library
+const fs = require('fs'); // built-in node.js file system library
 const fsPath = require('fs-path'); // open source high level fs function
 const glob = require('glob'); // open source glob capability for node
 const mv = require('mv'); // open source mv capability for node
 const open = require('open'); // open source web browser URL opener
-const process = require('process'); // node.js process library
+const path = require('path'); // built-in node.js path library
+const process = require('process'); // built-in node.js process library
 
 function automaDICOM() {
 	this.in = null;
-	this.rules = null;
+	this.rules = __dirname + path.sep + 'usr' + path.sep + 'rules.csv';
 	this.out = null;
-	this.append = null;
+	this.append = __dirname + path.sep + 'usr' + path.sep + 'append.csv';
 	this.server = false;
 	this.verbose = true;
 	this.list = false;
@@ -77,27 +78,21 @@ function automaDICOM() {
 			case 'InstanceCreationDate':
 			case 'PatientBirthDate':
 			case 'StudyDate':
-				if (typeof value !== 'number') {
-					this.error(`${tag} ${value}
-	Dates must be entered as a Number in the format YYYYMMDD`);
-				}
-				let d = value.toString();
-				let isYear = (parseInt(d.slice(0, 4)) >= 1970);
-				let isMonth = (parseInt(d.slice(4, 6)) <= 12);
-				let isDay = (parseInt(d.slice(6, 8)) <= 31);
+				let isYear = (parseInt(value.slice(0, 4)) >= 1900);
+				let isMonth = (parseInt(value.slice(4, 6)) <= 12);
+				let isDay = (parseInt(value.slice(6, 8)) <= 31);
 				if ((!isYear || !isMonth || !isDay)) {
 					this.error(`${tag} ${value}
 	Dates must be entered as a Number in the format YYYYMMDD`);
 				}
+				break;
 			case 'AcquisitionTime':
 			case 'ContentTime':
 			case 'InstanceCreationTime':
 			case 'PatientBirthTime':
 			case 'StudyTime':
-				if (typeof value !== 'number') {
-					this.error(`${tag} ${value}
-	Times must be entered as a Number`);
-				}
+				// check
+				break;
 			default:
 		}
 	}
@@ -107,10 +102,16 @@ function automaDICOM() {
 		// loads the parser and writer from the open source library DWV
 		let parser = new dwv.dicom.DicomParser();
 		let writer = new dwv.dicom.DicomWriter();
+		if (this.verbose) {
+			console.log('loading ' + file);
+		}
 		// parse the array buffer of the file
 		parser.parse(new Uint8Array(fs.readFileSync(file)).buffer);
 		// get the tags
 		let elements = parser.getDicomElements();
+		if (this.list) {
+			console.log(elements.dump());
+		}
 		// the default rule must be included, it simply copies all other tag's value(s)
 		// hard coding this inside this program pervents users from screwing it up
 		// also for user convience the action of their rules is always 'replace'
@@ -131,40 +132,41 @@ function automaDICOM() {
 				value: values[i]
 			};
 		});
+		if (this.verbose) {
+			values.forEach((value, i) => {
+				console.log(`${this.tags[i]} = ${value}`);
+			});
+		}
 		// the rules are applied immediately after they are set
 		writer.rules = rules;
 		// buffer gets the modified DICOM file
 		let buffer = writer.getBuffer(parser.getRawDicomElements());
 		// let's decide where to write the file!
 		let dir, imgName;
-		let append = '';
 		let newPath = '';
 		if (this.out != null) {
 			dir = this.out;
-			if (this.verbose) {
-				console.log(values);
-			}
 			for (i = 0; i < this.append.length - 1; i++) {
-				append += '/' + this.fulfillTagReqs(this.append[i][0], elements, values);
+				dir += path.sep + this.fulfillTagReqs(this.append[i][0], elements, values);
 			}
 			imgName = this.fulfillTagReqs(this.append[this.append.length - 1][0], elements, values);
 			// at the end of this loop it is assured that a unique file name has been created
 			for (i = 0; newPath == '' || this.newPaths.includes(newPath) || fs.existsSync(newPath); i++) {
-				newPath = `${dir + append}/${imgName}_${i.toString()}.dcm`;
+				newPath = dir + path.sep + `${imgName}_${i.toString()}.dcm`;
 				if (newPath == file) {
 					break;
 				}
 			}
 		} else {
 			// get the directory of the file
-			dir = file.slice(0, file.lastIndexOf('/') + 1);
+			dir = file.slice(0, file.lastIndexOf(path.sep) + 1);
 			// prepend anon_ to the file name
-			imgName = 'anon_' + file.slice(file.lastIndexOf('/') + 1, file.length);
+			imgName = 'anon_' + file.slice(file.lastIndexOf(path.sep) + 1, file.length);
 			newPath = dir + imgName;
 		}
 		this.newPaths.push(newPath);
 		if (this.verbose) {
-			console.log(newPath);
+			console.log('wrote ' + newPath);
 		}
 
 
@@ -211,13 +213,14 @@ function automaDICOM() {
 	}
 
 	this.run = () => {
+		console.log('');
 		if (this.in != null && this.rules != null) {
 			// if the input path is a directory send it straight to the setup function
 			// else glob for leaves of the fs
 			if (!fs.statSync(this.in).isDirectory()) {
 				this.setup(null, [this.in]);
 			} else {
-				glob(this.in + '/**/*', this.setup);
+				glob(this.in + path.sep + '**' + path.sep + '*', this.setup);
 			}
 		} else {
 			this.error('required input and rules paths not entered');

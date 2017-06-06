@@ -1,7 +1,3 @@
-PatientID; 'Anon1'
-PatientName; 'Anon1'
-StudyDescription; 'Mammo Screening With Tomosynthesis Bilateral'
-ProtocolName; $FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO') + ' Combo'
-SeriesDescription; $FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO') + (($NumberOfFrames <= 1)?'':(($NumberOfFrames <= 20)?' Tomosynthesis Projection':' Breast Tomosynthesis Image'))
-Modality; 'MG'
-StudyDate;20171222
+PatientID; 'Anonymous'
+PatientName; 'Anonymous'
+PatientBirthDate; '19000101'
