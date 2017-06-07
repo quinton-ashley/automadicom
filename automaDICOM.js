@@ -80,14 +80,14 @@ function automaDICOM() {
 			case 'StudyDate':
 				if (typeof value !== 'string') {
 					this.error(`${tag} ${value}
-	Dates must be entered as a String in the format 'YYYYMMDD'`);
+Dates must be entered as a String in a standard format, ex:'YYYYMMDD'`);
 				}
 				let isYear = (parseInt(value.slice(0, 4)) >= 1900);
 				let isMonth = (parseInt(value.slice(4, 6)) <= 12);
 				let isDay = (parseInt(value.slice(6, 8)) <= 31);
 				if ((!isYear || !isMonth || !isDay)) {
 					this.error(`${tag} ${value}
-	Dates must be entered as a String in the format 'YYYYMMDD'`);
+Dates must be entered as a String in a standard format, ex:'YYYYMMDD'`);
 				}
 				break;
 			case 'AcquisitionTime':
@@ -95,7 +95,10 @@ function automaDICOM() {
 			case 'InstanceCreationTime':
 			case 'PatientBirthTime':
 			case 'StudyTime':
-				// check
+				if (typeof value !== 'string') {
+					this.error(`${tag} ${value}
+Times must be entered as a String in a standard format, ex:'HHMMSS'`);
+				}
 				break;
 			default:
 		}
@@ -107,10 +110,18 @@ function automaDICOM() {
 		let parser = new dwv.dicom.DicomParser();
 		let writer = new dwv.dicom.DicomWriter();
 		if (this.verbose) {
-			console.log('loading ' + file);
+			console.log('loading: ' + file);
 		}
-		// parse the array buffer of the file
-		parser.parse(new Uint8Array(fs.readFileSync(file)).buffer);
+		try {
+			// parse the array buffer of the file
+			parser.parse(new Uint8Array(fs.readFileSync(file)).buffer);
+		} catch (err) {
+			fs.renameSync(file, file.slice(0, file.length - 4));
+			this.error(`failed to load ${file.slice(0, file.length-4)}
+This file does not have an extension and is not a DICOM image.
+Please give this file a proper extension or remove it from the input directory.`);
+			return;
+		}
 		// get the tags
 		let elements = parser.getDicomElements();
 		if (this.list) {
@@ -170,7 +181,7 @@ function automaDICOM() {
 		}
 		this.newPaths.push(newPath);
 		if (this.verbose) {
-			console.log('wrote ' + newPath);
+			console.log('wrote: ' + newPath + '\n');
 		}
 
 
@@ -203,14 +214,13 @@ function automaDICOM() {
 			this.append = CSV.parse(this.append);
 		}
 
-		for (let i = 0, file = ''; i < files.length; i++) {
-			file = files[i];
-			if (!fs.statSync(file).isDirectory()) {
-				if (path.parse(file).ext == '') {
-					fs.renameSync(file, file += '.dcm');
+		for (let i = 0; i < files.length; i++) {
+			if (!fs.statSync(files[i]).isDirectory()) {
+				if (path.parse(files[i]).ext == '') {
+					fs.renameSync(files[i], files[i] += '.dcm');
 				}
-				if (path.parse(file).ext == '.dcm') {
-					this.edit(file, files);
+				if (path.parse(files[i]).ext == '.dcm') {
+					this.edit(files[i], files);
 				}
 			}
 		}
@@ -219,7 +229,7 @@ function automaDICOM() {
 	this.run = () => {
 		if (this.in != null) {
 			console.log('');
-			console.log('input: ' + this.in);
+			console.log('input: ' + this.in + '\n');
 			// if the input path is a directory send it straight to the setup function
 			// else glob for leaves of the fs
 			if (!fs.statSync(this.in).isDirectory()) {

@@ -59,7 +59,7 @@ $tag2.trim() + 'youCanAlsoUseJS'
 'theLastLineIsTheImageName'
 ```
 The example file above will create a four level directory structure with the last line being used as the output file name.  A sequence number is added if you're processing multiple files that would have the same path.  Just as in the rules file, you can use tag requests to name the directories and files.  A single dollar sign will get the new value of the tag if the tag has been modified or the original value if it was not.  Be aware that using two dollar signs will still get the original tag!  
-The `.dcm` extension will automatically be added to the original image name.  There is no option to disable this, since not having the `.dcm`extension on a DICOM file is improper.  If automaDICOM encounters an input file with no extension that isn't a DICOM image it will throw an error and report to the user to give the file its proper extension.  
+The `.dcm` extension will automatically be added to the original DICOM file if it does not have an extension.  There is no option to disable this, since not having the `.dcm`extension on a DICOM file is improper.  If automaDICOM encounters an input file with no extension that isn't a DICOM image it will throw an error and report to the user to give the file its proper extension.  
 Here's an example with standard DICOM tags that will create a directory with the PatientID value as the first level directory name, with the Modality as the second level subdirectory name, with the SeriesDescription as the file name.
 ```
 $PatientID
