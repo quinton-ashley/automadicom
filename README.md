@@ -5,9 +5,10 @@ Automatic DICOM tag value editor that uses dynamically evaluated rules to modify
 2. Run the GitHub Desktop app.  You do not need to have a GitHub account or login to use this app, just skip those steps in the setup.  Click on "File" then "Clone Repository" in the toolbar, enter `quinton-ashley/automaDICOM`, then click clone.  This installs automaDICOM in the GitHub folder in your Documents folder.  Anytime there is an update you can just open up the GitHub Desktop app and press the "Sync" button on macOS or press "Fetch origin" then "Pull" on Windows.  You'd have to download and extract a ZIP folder from the GitHub page every time you wanted to update if you weren't using git!
 3. Node.js and npm are required to run automaDICOM.  Node.js is a JavaScript runtime built on Chrome's V8 JavaScript engine.  Node.js' package ecosystem, npm, is the largest ecosystem of open source libraries in the world!  The backbone of this project is the incredible npm package, [DWV](https://github.com/ivmartel/dwv).  Install the LTS version of [Node.js and npm](https://nodejs.org).
 4. Windows users must use "Developer Mode" to run automaDICOM.  Type "developer" into the Cortana search bar and click on the "For developers settings".  Once the Settings window comes up check the "Developer Mode" option and restart your computer.
+5. You must have read/write permission for both the input and output directories.
   
 ## Input File/Directory Format
-The first command line argument can be either a single image or directory with subdirectories that contain images.  By design the program will not look for images directly in the specified directory.  This program does not edit any contents of the input file(s) but will add the `.dcm` extension if the improperly named DICOM file(s) doesn't(don't) have it.
+The first command line argument can be either a single image or directory with subdirectories that contain images.  By design the program will not look for images directly in the specified directory but rather images in the subdirectories of that specified directory.  This program does not edit any contents of the input file(s) but will add the `.dcm` extension if the improperly named DICOM file(s) doesn't(don't) have it.
 ## Rules CSV Format
 The rules CSV file tells the program what tag values to change in the DICOM images.  A template `rules.csv` file is provided and stored in the automaDICOM directory in the `usr` folder.  For the rules file, write one rule per line.  The tag and its replacement value must be separated by a semicolon.  Use the exact attribute name of the tag.  
 ### Simple Example with Static Replacements
@@ -47,7 +48,7 @@ oneMoreTag; ( ($dicomTagZ.includes('Quinton Ashley')) ? 'author' : 'user' )
 ```
 The program dynamically evaluates the replacement values by using the `eval()` function.  If you aren't a Javascript programmer take a look at the powerful methods you can use from the [String object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) and learn about [ternary operators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_Operator)!
 ## Output Directory and File Name Formats
-The second command line argument can be an existing or non-existent directory that the program has permission and is able to write to.  If no output directory is specified, all modified images will be placed in the same directory as the originals.
+The second command line argument can be an existing or a directory you would like to create that the program has permission and is able to write to.  If no output directory is specified, all modified images will be placed in the same directory as the originals.
 ### Append CSV Format
 `append.csv` is another configuration file like `rules.csv`.  It lets you dynamically name new paths for output directories and files.  A template `append.csv` file is provided and stored in the automaDICOM directory in the `usr` folder.  If an output directory is specified on the command line, the append CSV is used.  Here's a generic example:
 ```javascript
@@ -58,20 +59,22 @@ $tag2.trim() + 'youCanAlsoUseJS'
 'theLastLineIsTheImageName'
 ```
 The example file above will create a four level directory structure with the last line being used as the output file name.  A sequence number is added if you're processing multiple files that would have the same path.  Just as in the rules file, you can use tag requests to name the directories and files.  A single dollar sign will get the new value of the tag if the tag has been modified or the original value if it was not.  Be aware that using two dollar signs will still get the original tag!  
-The `.dcm` extension will automatically be added to the image name.  There is no option to disable this, not having the `.dcm`extension on a DICOM file is improper.  Here's an example with standard DICOM tags that will create a directory with the PatientID value as the first level directory name, with the Modality as the second level subdirectory name, with the SeriesDescription as the file name.
+The `.dcm` extension will automatically be added to the original image name.  There is no option to disable this, since not having the `.dcm`extension on a DICOM file is improper.  If automaDICOM encounters an input file with no extension that isn't a DICOM image it will throw an error and report to the user to give the file its proper extension.  
+Here's an example with standard DICOM tags that will create a directory with the PatientID value as the first level directory name, with the Modality as the second level subdirectory name, with the SeriesDescription as the file name.
 ```
 $PatientID
 $Modality
 $SeriesDescription
 ```
 ## Running the Script
-The command line programs Git Bash, Terminal, and PowerShell are able to write the path names for you if you drag and drop a file or folder onto their window.  This will save you a lot of time!  The `cd` command means change directory.  The `node` command runs node.js scripts.  
+The command line programs Git Bash, Terminal, and PowerShell are able to write the path names for you if you drag and drop a file or folder onto their window.  This will save you a lot of time!  
+In the example below the `cd` command means change directory.  The `node` command is used to run automaDICOM's `main.js` script.  
 If you are on Windows open up Git Bash and use this format:
 ```
 cd '/c/pathOf/automaDICOM/'
 node 'main.js' '/c/pathTo/imagesDir/or/img.dcm' '/c/optionalPathTo/outputDir'
 ```
-If you are on Windows and don't have git open up PowerShell and use this format:
+If you are on Windows and don't have git, open up PowerShell and use this format:
 ```
 cd "C:\pathOf\automaDICOM"
 node "main.js" "C:\pathTo\imagesDir\or\img.dcm" "C:\optionalPathTo\outputDir"
