@@ -81,8 +81,8 @@ node "main.js" "C:\pathTo\imagesDir\or\img.dcm" "C:\optionalPathTo\outputDir"
 ```
 If you are on Mac or Linux open up Terminal and use this format:
 ```
-cd '/pathOf/automaDICOM/'
-node 'main.js' '/pathTo/imagesDir/or/img.dcm' '/optionalPathTo/outputDir'
+cd /pathOf/automaDICOM/
+node main.js /pathTo/imagesDir/or/img.dcm /optionalPathTo/outputDir
 ```
 Note that you do not have to specify the paths to the `rules.csv` or `append.csv`.  automaDICOM uses the corresponding files in the `usr` folder automatically so don't move them!  automaDICOM will only use the files with those exact names so if you want to save a rules or append file for later just name it differently, for example `rulesForKnees.csv`.
 ## EULA
