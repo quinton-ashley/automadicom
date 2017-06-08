@@ -196,7 +196,7 @@ Please give this file a proper extension or remove it from the input directory.`
 				fs.unlink(file);
 			}
 			if (this.specialFix) {
-				let dcmodify = spawn(__dirname + path.sep + 'dcmodify', [newPath, '-i', 'ImageLaterality=' + this.fulfillTagRequest("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')")]);
+				let dcmodify = spawn(__dirname + path.sep + 'dcmodify', [newPath, '-i', 'ImageLaterality=' + this.fulfillTagReqs("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')", elements, values)]);
 
 				dcmodify.stdout.on('data', (data) => {
 					console.log(`stdout: ${data}`);
