@@ -7,6 +7,7 @@ const mv = require('mv'); // open source mv capability for node
 const open = require('open'); // open source web browser URL opener
 const path = require('path'); // built-in node.js path library
 const process = require('process'); // built-in node.js process library
+const spawn = require('child_process').spawn;
 
 function automaDICOM() {
 	this.in = null;
@@ -16,6 +17,7 @@ function automaDICOM() {
 	this.server = false;
 	this.verbose = true;
 	this.list = false;
+	this.specialFix = true;
 	this.tags = [];
 	this.values = [];
 	this.newPaths = [];
@@ -86,7 +88,7 @@ Dates must be entered as a String in a standard format, ex:'YYYYMMDD'`);
 				let isMonth = (parseInt(value.slice(4, 6)) <= 12);
 				let isDay = (parseInt(value.slice(6, 8)) <= 31);
 				if ((!isYear || !isMonth || !isDay)) {
-					this.error(`${tag} ${value}
+					console.log(`${tag} ${value}
 Dates must be entered as a String in a standard format, ex:'YYYYMMDD'`);
 				}
 				break;
@@ -192,6 +194,22 @@ Please give this file a proper extension or remove it from the input directory.`
 			if (this.server) {
 				// if running in server mode (continuous operation) delete the original file
 				fs.unlink(file);
+			}
+			if (this.specialFix) {
+				let dcmodify = spawn(__dirname + path.sep + 'dcmodify', [newPath, '-i', 'ImageLaterality=R CC']);
+
+				dcmodify.stdout.on('data', (data) => {
+					console.log(`stdout: ${data}`);
+				});
+
+				dcmodify.stderr.on('data', (data) => {
+					console.log(`stderr: ${data}`);
+				});
+
+				dcmodify.on('close', (code) => {
+					console.log(`child process exited with code ${code}`);
+					fs.unlink(newPath + '.bak');
+				});
 			}
 		});
 	};
