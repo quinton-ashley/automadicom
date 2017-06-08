@@ -17,7 +17,7 @@ function automaDICOM() {
 	this.server = false;
 	this.verbose = true;
 	this.list = false;
-	this.specialFix = true;
+	this.specialFix = false;
 	this.tags = [];
 	this.values = [];
 	this.newPaths = [];
