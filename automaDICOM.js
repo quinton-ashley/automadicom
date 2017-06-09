@@ -190,29 +190,27 @@ Please give this file a proper extension or remove it from the input directory.`
 
 		// writeFile can be used asynchronously here, this is advantageous
 		// fsPath makes any new directories if necessary
-		fsPath.writeFile(newPath, Buffer(new Uint8Array(buffer)), (err) => {
-			if (err) throw err;
-			if (this.server) {
-				// if running in server mode (continuous operation) delete the original file
-				fs.unlink(file);
-			}
-			if (this.specialFix) {
-				let dcmodify = spawn(__dirname + path.sep + 'dcmodify', [newPath, '-i', 'ImageLaterality=' + this.fulfillTagReqs("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')", elements, values), '-i', 'InstitutionName=Marin Breast Health']);
+		fsPath.writeFileSync(newPath, Buffer(new Uint8Array(buffer)));
+		if (this.server) {
+			// if running in server mode (continuous operation) delete the original file
+			fs.unlink(file);
+		}
+		if (this.specialFix) {
+			let dcmodify = spawn(__dirname + path.sep + 'dcmodify', [newPath, '-i', 'ImageLaterality=' + this.fulfillTagReqs("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')", elements, values), '-i', 'InstitutionName=Marin Breast Health']);
 
-				dcmodify.stdout.on('data', (data) => {
-					console.log(`stdout: ${data}`);
-				});
+			dcmodify.stdout.on('data', (data) => {
+				console.log(`stdout: ${data}`);
+			});
 
-				dcmodify.stderr.on('data', (data) => {
-					console.log(`stderr: ${data}`);
-				});
+			dcmodify.stderr.on('data', (data) => {
+				console.log(`stderr: ${data}`);
+			});
 
-				dcmodify.on('close', (code) => {
-					console.log(`child process exited with code ${code}`);
-					fs.unlink(newPath + '.bak');
-				});
-			}
-		});
+			dcmodify.on('close', (code) => {
+				console.log(`child process exited with code ${code}`);
+				fs.unlink(newPath + '.bak');
+			});
+		}
 	};
 
 	this.setup = (err, files) => {
