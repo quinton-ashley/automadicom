@@ -17,7 +17,7 @@ function automaDICOM() {
 	this.server = false;
 	this.verbose = true;
 	this.list = false;
-	this.specialFix = true;
+	this.specialFix = false;
 	this.tags = [];
 	this.values = [];
 	this.newPaths = [];
@@ -25,6 +25,29 @@ function automaDICOM() {
 	this.error = (err) => {
 		console.log('Error: ' + err);
 		process.exit(1);
+	}
+
+	this.cleanEmptyFoldersRecursively = (folder) => {
+		if (!fs.statSync(folder).isDirectory()) {
+			return 1;
+		}
+		var files = fs.readdirSync(folder);
+		if (files.length >= 1) {
+			files.forEach((file) => {
+				var fullPath = folder + '/' + file;
+				cleanEmptyFoldersRecursively(fullPath);
+			});
+			files = fs.readdirSync(folder);
+		}
+		if (files.length <= 1) {
+			if (files[0] == '.DS_Store') {
+				fs.unlinkSync(folder + '/' + files[0]);
+			} else if (files.length == 1) {
+				return;
+			}
+			fs.rmdirSync(folder);
+			console.log('removed: ', folder);
+		}
 	}
 
 	this.getSubLevelTag = (tagReq, elements) => {
@@ -255,6 +278,9 @@ Please give this file a proper extension or remove it from the input directory.`
 				this.setup(null, [this.in]);
 			} else {
 				glob(this.in + path.sep + '**' + path.sep + '*', this.setup);
+				if (this.server) {
+					this.cleanEmptyFoldersRecursively(this.in);
+				}
 			}
 		} else {
 			this.error('required input path not specified');
