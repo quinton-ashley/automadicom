@@ -17,13 +17,13 @@ function automaDICOM() {
 	this.server = false;
 	this.verbose = true;
 	this.list = false;
-	this.specialFix = false;
+	this.specialFix = true;
 	this.tags = [];
 	this.values = [];
 	this.newPaths = [];
 
 	this.error = (err) => {
-		console.log('ERROR: ' + err);
+		console.log('Error: ' + err);
 		process.exit(1);
 	}
 
@@ -38,7 +38,7 @@ function automaDICOM() {
 	}
 
 	this.fulfillTagReqs = (str, elements, values) => {
-		let match, tagReq, tag;
+		let match, tagReq, val;
 		let useOgVal = false;
 		let editIdx = -1;
 		let regex = /\$[\w|\-|_]*/i;
@@ -49,21 +49,22 @@ function automaDICOM() {
 			// if values is not defined or if the requested tag is not found in this.tags
 			if (useOgVal || (editIdx = this.tags.indexOf(tagReq)) <= -1) {
 				// get the tag from the zero level DICOM by name
-				tag = elements.getFromName(tagReq);
-				if (tag == null) {
-					tag = this.getSubLevelTag(tagReq, elements);
+				val = elements.getFromName(tagReq);
+				if (val == null) {
+					val = this.getSubLevelTag(tagReq, elements);
 				}
 				// if it's still null it wasn't found
-				if (tag == null) {
-					console.log('ERROR: ' + tagReq + ' tag not found!!');
-					tag = 'null';
+				if (val == null) {
+					console.log('Error: ' + tagReq + ' tag not found!!');
+					val = 'null';
 				}
+				val = val.replace('\u0000', '');
 			} else {
 				// get the tag from the values array
-				tag = values[editIdx];
+				val = values[editIdx];
 			}
 			// replace the request with the tag itself, the quotes are necessary
-			str = str.replace('$' + tagReq, `\'${tag}\'`);
+			str = str.replace('$' + tagReq, `\'${val}\'`);
 		}
 		// note that eval is used to evaluate user javascript dynamically!
 		// direct access to String methods gives users advanced control
@@ -120,7 +121,7 @@ Times must be entered as a String in a standard format, ex:'HHMMSS'`);
 			parser.parse(new Uint8Array(fs.readFileSync(file)).buffer);
 		} catch (err) {
 			fs.renameSync(file, file.slice(0, file.length - 4));
-			console.log(`ERROR: failed to load ${file.slice(0, file.length-4)}
+			console.log(`Error: failed to load ${file.slice(0, file.length-4)}
 This file does not have an extension and is not a DICOM image.
 Please give this file a proper extension or remove it from the input directory.`);
 			return;
@@ -196,7 +197,8 @@ Please give this file a proper extension or remove it from the input directory.`
 			fs.unlink(file);
 		}
 		if (this.specialFix) {
-			let dcmodify = spawn(__dirname + path.sep + 'dcmodify', [newPath, '-i', 'ImageLaterality=' + this.fulfillTagReqs("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')", elements, values), '-i', 'InstitutionName=Marin Breast Health']);
+			let mod = [newPath, '-i', 'ImageLaterality=' + this.fulfillTagReqs("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')", elements, values), '-i', 'InstitutionName=Marin Breast Health'];
+			let dcmodify = spawn(__dirname + path.sep + 'dcmodify', mod);
 
 			dcmodify.stdout.on('data', (data) => {
 				console.log(`stdout: ${data}`);
@@ -215,7 +217,7 @@ Please give this file a proper extension or remove it from the input directory.`
 
 	this.setup = (err, files) => {
 		if (err || typeof files == 'undefined' || files.length == 0) {
-			console.log('ERROR: invalid path, no files found');
+			console.log('Error: invalid path, no files found');
 			return;
 		}
 		// read the rules file synchronously
