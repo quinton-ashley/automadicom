@@ -55,7 +55,8 @@ function automaDICOM() {
 				}
 				// if it's still null it wasn't found
 				if (tag == null) {
-					this.error(tagReq + ' tag not found!!');
+					console.log('ERROR: ' + tagReq + ' tag not found!!');
+					tag = 'null';
 				}
 			} else {
 				// get the tag from the values array
@@ -119,7 +120,7 @@ Times must be entered as a String in a standard format, ex:'HHMMSS'`);
 			parser.parse(new Uint8Array(fs.readFileSync(file)).buffer);
 		} catch (err) {
 			fs.renameSync(file, file.slice(0, file.length - 4));
-			this.error(`failed to load ${file.slice(0, file.length-4)}
+			console.log(`ERROR: failed to load ${file.slice(0, file.length-4)}
 This file does not have an extension and is not a DICOM image.
 Please give this file a proper extension or remove it from the input directory.`);
 			return;
@@ -183,7 +184,7 @@ Please give this file a proper extension or remove it from the input directory.`
 		}
 		this.newPaths.push(newPath);
 		if (this.verbose) {
-			console.log('wrote: ' + newPath + '\n');
+			console.log('writing: ' + newPath + '\n');
 		}
 
 
@@ -196,7 +197,7 @@ Please give this file a proper extension or remove it from the input directory.`
 				fs.unlink(file);
 			}
 			if (this.specialFix) {
-				let dcmodify = spawn(__dirname + path.sep + 'dcmodify', [newPath, '-i', 'ImageLaterality=' + this.fulfillTagReqs("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')", elements, values)]);
+				let dcmodify = spawn(__dirname + path.sep + 'dcmodify', [newPath, '-i', 'ImageLaterality=' + this.fulfillTagReqs("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')", elements, values), '-i', 'InstitutionName=Marin Breast Health']);
 
 				dcmodify.stdout.on('data', (data) => {
 					console.log(`stdout: ${data}`);
@@ -217,7 +218,7 @@ Please give this file a proper extension or remove it from the input directory.`
 	this.setup = (err, files) => {
 		if (err || typeof files == 'undefined' || files.length == 0) {
 			console.log('ERROR: invalid path, no files found');
-			this.error(err);
+			return;
 		}
 		// read the rules file synchronously
 		this.rules = fs.readFileSync(this.rules, 'utf8');
