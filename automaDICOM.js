@@ -262,7 +262,11 @@ Please give this file a proper extension or remove it from the input directory.`
 					fs.renameSync(files[i], files[i] += '.dcm');
 				}
 				if (path.parse(files[i]).ext == '.dcm') {
-					this.edit(files[i], files);
+					try {
+						this.edit(files[i], files);
+					} catch (err) {
+						console.log();
+					}
 				}
 			}
 		}
