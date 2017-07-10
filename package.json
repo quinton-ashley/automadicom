@@ -1,5 +1,17 @@
 {
   "author": "Quinton Ashley",
+  "bin": {
+    "automaDICOM": "./main.js"
+  },
+  "bugs": {
+    "url": "https://github.com/quinton-ashley/automaDICOM/issues"
+  },
+  "contributors": [
+    {
+      "name": "Quinton Ashley",
+      "email": "qashto@gmail.com"
+    }
+  ],
   "dependencies": {
     "chalk": "^2.0.1",
     "csv-string": "^2.3.2",
@@ -7,13 +19,21 @@
     "fs-path": "0.0.23",
     "glob": "^7.1.2",
     "minimist": "^1.2.0",
+    "multi-glob": "^1.0.1",
     "mv": "^2.1.1",
     "node-cleanup": "^2.1.2",
     "open": "0.0.5"
   },
   "description": "CLI automatic DICOM editor",
+  "entry point": "main.js",
   "license": "MIT",
   "main": "main.js",
+  "maintainers": [
+    {
+      "name": "Quinton Ashley",
+      "email": "qashto@gmail.com"
+    }
+  ],
   "name": "automaDICOM",
   "repository": {
     "type": "git",
