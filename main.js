@@ -1,13 +1,6 @@
-var exit = require('node-cleanup'); // open source graceful exit
-var automaDicom = require('./automaDICOM.js');
+#!/usr/bin/env node
 
-if (process.argv.length >= 4) {
-	automaDicom.out = process.argv[3].toString(); // rules path is arg 3
-}
-if (process.argv.length >= 3) {
-	automaDicom.in = process.argv[2].toString(); // input path is arg 2
-}
-automaDicom.run();
+const automaDicom = require('./automaDICOM.js');
+const argv = require('minimist')(process.argv.slice(2));
 
-// graceful exit with node-cleanup
-exit((exitCode, signal) => {});
+automaDicom(argv._[0], argv._[1], argv);

@@ -1,40 +1,49 @@
-const CSV = require('csv-string'); // open source csv parser and stringifier
-const dwv = require('dwv'); // open source DICOM parser, viewer, and writer
-const fs = require('fs'); // built-in node.js file system library
-const fsPath = require('fs-path'); // open source high level fs function
-const glob = require('glob'); // open source glob capability for node
-const mv = require('mv'); // open source mv capability for node
-const open = require('open'); // open source web browser URL opener
-const path = require('path'); // built-in node.js path library
-const process = require('process'); // built-in node.js process library
-const spawn = require('child_process').spawn;
+module.exports = function (inPath, outPath, options) {
+	const chalk = require('chalk'); // open source terminal text coloring library
+	const CSV = require('csv-string'); // open source csv parser and stringifier
+	const dwv = require('dwv'); // open source DICOM parser, viewer, and writer
+	const fs = require('fs'); // built-in node.js file system library
+	const fsPath = require('fs-path'); // open source high level fs function
+	const glob = require('multi-glob').glob; // open source glob capability for node
+	const mv = require('mv'); // open source mv capability for node
+	const open = require('open'); // open source web browser URL opener
+	const path = require('path'); // built-in node.js path library
+	const process = require('process'); // built-in node.js process library
+	const spawn = require('child_process').spawn;
 
-function automaDICOM() {
-	this.in = null;
-	this.rules = __dirname + path.sep + 'usr' + path.sep + 'rules.csv';
-	this.out = null;
-	this.append = __dirname + path.sep + 'usr' + path.sep + 'append.csv';
-	this.server = false;
-	this.verbose = true;
-	this.list = false;
-	this.specialFix = false;
-	this.tags = [];
-	this.values = [];
-	this.newPaths = [];
+	// CLI options
+	const list = (options.l == true) ? true : false;
+	const server = (options.S == true) ? true : false;
+	const specialFix = (options.f == true) ? true : false;
+	const verbose = (options.s == true) ? false : true;
 
-	this.error = (err) => {
-		console.log('Error: ' + err);
+	const log = console.log;
+
+	let files = [];
+	let tags = [];
+	let rules = [];
+	let newPaths = [];
+	let append = __dirname + '/usr/append.csv';
+	if (outPath != null && outPath !== undefined) {
+		append = fs.readFileSync(append, 'utf8');
+		append = CSV.parse(append);
+	} else {
+		append = [];
+	}
+
+	const error = (err) => {
+		log(chalk.red('Error: ' + err));
 		process.exit(1);
 	}
 
-	this.cleanEmptyFoldersRecursively = (folder) => {
+	const cleanEmptyFoldersRecursively = (folder) => {
 		if (!fs.statSync(folder).isDirectory()) {
 			return 1;
 		}
-		var files = fs.readdirSync(folder);
+		let files = fs.readdirSync(folder);
 		if (files.length >= 1) {
 			files.forEach((file) => {
-				var fullPath = folder + '/' + file;
+				let fullPath = folder + '/' + file;
 				cleanEmptyFoldersRecursively(fullPath);
 			});
 			files = fs.readdirSync(folder);
@@ -46,11 +55,11 @@ function automaDICOM() {
 				return;
 			}
 			fs.rmdirSync(folder);
-			console.log('removed: ', folder);
+			log('removed: ', folder);
 		}
 	}
 
-	this.getSubLevelTag = (tagReq, elements) => {
+	const getSubLevelTag = (tagReq, elements) => {
 		switch (tagReq) {
 			case 'CodeMeaning':
 				return elements.getFromName('ViewCodeSequence')['x00080104'].value[0];
@@ -60,8 +69,8 @@ function automaDICOM() {
 		}
 	}
 
-	this.fulfillTagReqs = (str, elements, values) => {
-		let match, tagReq, val;
+	const fulfillTagReqs = (str, elements, values) => {
+		let match, reqTag, tagReq;
 		let useOgVal = false;
 		let editIdx = -1;
 		let regex = /\$[\w|\-|_]*/i;
@@ -69,25 +78,27 @@ function automaDICOM() {
 		while (match = regex.exec(str)) {
 			useOgVal = (match[0][1] == '$');
 			tagReq = match[0].slice(((useOgVal) ? 2 : 1), match[0].length);
-			// if values is not defined or if the requested tag is not found in this.tags
-			if (useOgVal || (editIdx = this.tags.indexOf(tagReq)) <= -1) {
+			// if the original value of the tag is requested
+			// or if the tag requested is not found in tags
+			// or if the tag requested is found in tags but does not yet have a value
+			if (useOgVal || (editIdx = tags.indexOf(tagReq)) <= -1 || editIdx >= values.length) {
 				// get the tag from the zero level DICOM by name
-				val = elements.getFromName(tagReq);
-				if (val == null) {
-					val = this.getSubLevelTag(tagReq, elements);
+				reqTag = elements.getFromName(tagReq);
+				if (reqTag == null) {
+					reqTag = getSubLevelTag(tagReq, elements);
 				}
 				// if it's still null it wasn't found
-				if (val == null) {
-					console.log('Error: ' + tagReq + ' tag not found!!');
-					val = 'null';
+				if (reqTag == null) {
+					log('Error: ' + tagReq + ' tag not found!!');
+					reqTag = 'null';
 				}
-				val = val.replace('\u0000', '');
+				reqTag = reqTag.replace('\u0000', '');
 			} else {
 				// get the tag from the values array
-				val = values[editIdx];
+				reqTag = values[editIdx];
 			}
 			// replace the request with the tag itself, the quotes are necessary
-			str = str.replace('$' + tagReq, `\'${val}\'`);
+			str = str.replace('$' + tagReq, `\'${reqTag}\'`);
 		}
 		// note that eval is used to evaluate user javascript dynamically!
 		// direct access to String methods gives users advanced control
@@ -98,7 +109,7 @@ function automaDICOM() {
 		return str;
 	}
 
-	this.errorCheck = (tag, value) => {
+	const errorCheck = (tag, value) => {
 		switch (tag) {
 			case 'AcquisitionDate':
 			case 'ContentDate':
@@ -106,15 +117,17 @@ function automaDICOM() {
 			case 'PatientBirthDate':
 			case 'StudyDate':
 				if (typeof value !== 'string') {
-					this.error(`${tag} ${value}
-Dates must be entered as a String in a standard format, ex:'YYYYMMDD'`);
+					error(`${tag} ${value}
+Dates must be entered as a String in a standard format, ex:'YYYYMMDD'
+`);
 				}
 				let isYear = (parseInt(value.slice(0, 4)) >= 1900);
 				let isMonth = (parseInt(value.slice(4, 6)) <= 12);
 				let isDay = (parseInt(value.slice(6, 8)) <= 31);
 				if ((!isYear || !isMonth || !isDay)) {
-					console.log(`${tag} ${value}
-Dates must be entered as a String in a standard format, ex:'YYYYMMDD'`);
+					log(`${tag} ${value}
+Dates must be entered as a String in a standard format, ex:'YYYYMMDD'
+`);
 				}
 				break;
 			case 'AcquisitionTime':
@@ -123,78 +136,81 @@ Dates must be entered as a String in a standard format, ex:'YYYYMMDD'`);
 			case 'PatientBirthTime':
 			case 'StudyTime':
 				if (typeof value !== 'string') {
-					this.error(`${tag} ${value}
-Times must be entered as a String in a standard format, ex:'HHMMSS'`);
+					error(`${tag} ${value}
+Times must be entered as a String in a standard format, ex:'HHMMSS'
+`);
 				}
 				break;
 			default:
 		}
 	}
 
-	this.edit = (file, files) => {
+	const edit = (file) => {
 		let i = 0;
 		// loads the parser and writer from the open source library DWV
 		let parser = new dwv.dicom.DicomParser();
 		let writer = new dwv.dicom.DicomWriter();
-		if (this.verbose) {
-			console.log('loading: ' + file);
+		if (verbose) {
+			log('loading: ' + file);
 		}
 		try {
 			// parse the array buffer of the file
 			parser.parse(new Uint8Array(fs.readFileSync(file)).buffer);
 		} catch (err) {
 			fs.renameSync(file, file.slice(0, file.length - 4));
-			console.log(`Error: failed to load ${file.slice(0, file.length-4)}
+			log(`
+Error: failed to load ${file.slice(0, file.length-4)}
 This file does not have an extension and is not a DICOM image.
-Please give this file a proper extension or remove it from the input directory.`);
+Please give this file a proper extension or remove it from the input directory.
+`);
 			return;
 		}
 		// get the tags
 		let elements = parser.getDicomElements();
-		if (this.list) {
-			console.log(elements.dump());
+		if (list) {
+			log(elements.dump());
 		}
 		// the default rule must be included, it simply copies all other tag's value(s)
 		// hard coding this inside this program pervents users from screwing it up
 		// also for user convience the action of their rules is always 'replace'
-		let rules = {
+		let dwvRules = {
 			default: {
 				action: 'copy',
 				value: null
 			}
 		};
-		// a seperate copy of the values array must be used for each image
-		let values = this.values.slice();
+		let values = [];
 		// rule objects conforms to the format the DICOM writer expects
-		this.tags.forEach((tag, i) => {
-			values[i] = this.fulfillTagReqs(values[i], elements, values);
-			this.errorCheck(tag, values[i]);
-			rules[tag] = {
+		tags.forEach((tag, i) => {
+			values.push(fulfillTagReqs(rules[i], elements, values));
+			errorCheck(tag, values[i]);
+			dwvRules[tag] = {
 				action: 'replace',
 				value: values[i]
 			};
 		});
-		if (this.verbose) {
+		if (verbose) {
 			values.forEach((value, i) => {
-				console.log(`${this.tags[i]} = ${value}`);
+				log(`${tags[i]} = ${value}`);
 			});
 		}
+		log(dwvRules);
 		// the rules are applied immediately after they are set
-		writer.rules = rules;
+		writer.rules = dwvRules;
 		// buffer gets the modified DICOM file
 		let buffer = writer.getBuffer(parser.getRawDicomElements());
 		// let's decide where to write the file!
 		let dir, imgName;
 		let newPath = '';
-		if (this.out != null) {
-			dir = this.out;
-			for (i = 0; i < this.append.length - 1; i++) {
-				dir += path.sep + this.fulfillTagReqs(this.append[i][0], elements, values);
+		if (outPath != null && outPath !== undefined) {
+			dir = outPath;
+			for (i = 0; i < append.length - 1; i++) {
+				dir += '/' + fulfillTagReqs(append[i][0], elements, values);
 			}
-			imgName = this.fulfillTagReqs(this.append[this.append.length - 1][0], elements, values);
+			imgName = fulfillTagReqs(append[append.length - 1][0], elements, values);
 			// at the end of this loop it is assured that a unique file name has been created
-			for (i = 0; newPath == '' || this.newPaths.includes(newPath) || fs.existsSync(newPath); i++) {
-				newPath = dir + path.sep + `${imgName}_${i.toString()}.dcm`;
+			for (i = 0; newPath == '' || newPaths.includes(newPath) || fs.existsSync(newPath); i++) {
+				newPath = `${dir}/${imgName}_${i.toString()}.dcm`;
 				if (newPath == file) {
 					break;
 				}
@@ -204,92 +220,84 @@ Please give this file a proper extension or remove it from the input directory.`
 			dir = path.parse(file).dir;
 			// prepend anon_ to the file name
 			imgName = 'anon_' + path.parse(file).name + '.dcm';
-			newPath = dir + path.sep + imgName;
+			newPath = dir + '/' + imgName;
 		}
-		this.newPaths.push(newPath);
-		if (this.verbose) {
-			console.log('writing: ' + newPath + '\n');
+		newPaths.push(newPath);
+		if (verbose) {
+			log('writing: ' + newPath + '\n');
 		}
 
-
-		// writeFile can be used asynchronously here, this is advantageous
 		// fsPath makes any new directories if necessary
 		fsPath.writeFileSync(newPath, Buffer(new Uint8Array(buffer)));
-		if (this.server) {
+		if (server) {
 			// if running in server mode (continuous operation) delete the original file
 			fs.unlink(file);
 		}
-		if (this.specialFix) {
-			let mod = [newPath, '-i', 'ImageLaterality=' + this.fulfillTagReqs("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')", elements, values), '-i', 'InstitutionName=Marin Breast Health'];
-			let dcmodify = spawn(__dirname + path.sep + 'dcmodify', mod);
+		if (specialFix) {
+			let mod = [newPath, '-i', 'ImageLaterality=' + fulfillTagReqs("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')", elements, values), '-i', 'InstitutionName=Marin Breast Health'];
+			let dcmodify = spawn(__dirname + '/dcmodify', mod);
 
 			dcmodify.stdout.on('data', (data) => {
-				console.log(`stdout: ${data}`);
+				log(`stdout: ${data}`);
 			});
 
 			dcmodify.stderr.on('data', (data) => {
-				console.log(`stderr: ${data}`);
+				log(`stderr: ${data}`);
 			});
 
 			dcmodify.on('close', (code) => {
-				console.log(`child process exited with code ${code}`);
+				log(`child process exited with code ${code}`);
 				fs.unlink(newPath + '.bak');
 			});
 		}
 	};
 
-	this.setup = (err, files) => {
-		if (err || typeof files == 'undefined' || files.length == 0) {
-			console.log('Error: invalid path, no files found');
-			return;
+	const setup = (err, matches) => {
+		files = matches;
+		if (files === undefined || files.length == 0) {
+			error('invalid path, no files found');
 		}
-		// read the rules file synchronously
-		this.rules = fs.readFileSync(this.rules, 'utf8');
-		// parse the csv file into arrays we can use
-		this.rules = CSV.parse(this.rules, ';');
-		this.rules.forEach((rule) => {
-			this.tags.push(rule[0]);
-			this.values.push(rule[1]);
+		let lines = __dirname + '/usr/rules.csv';
+		lines = fs.readFileSync(lines, 'utf8');
+		lines = CSV.parse(lines, ';');
+		if (lines.length <= 0) {
+			error('rules files has no rules!');
+		}
+		lines.forEach((line) => {
+			tags.push(line[0]);
+			rules.push(line[1]);
 		});
-		if (this.out != null) {
-			this.append = fs.readFileSync(this.append, 'utf8');
-			this.append = CSV.parse(this.append);
-		}
 
 		for (let i = 0; i < files.length; i++) {
-			if (!fs.statSync(files[i]).isDirectory()) {
-				if (path.parse(files[i]).ext == '') {
-					fs.renameSync(files[i], files[i] += '.dcm');
-				}
-				if (path.parse(files[i]).ext == '.dcm') {
-					try {
-						this.edit(files[i], files);
-					} catch (err) {
-						console.log();
-					}
+			if ((!fs.statSync(files[i]).isDirectory()) && path.parse(files[i]).ext == '') {
+				fs.renameSync(files[i], files[i] += '.dcm');
+			}
+			if (path.parse(files[i]).ext == '.dcm' || path.parse(files[i]).ext == '.DCM') {
+				try {
+					edit(files[i], files);
+				} catch (err) {
+					log(err);
 				}
 			}
 		}
 	}
 
-	this.run = () => {
-		if (this.in != null) {
-			console.log('');
-			console.log('input: ' + this.in + '\n');
-			// if the input path is a directory send it straight to the setup function
-			// else glob for leaves of the fs
-			if (!fs.statSync(this.in).isDirectory()) {
-				this.setup(null, [this.in]);
-			} else {
-				glob(this.in + path.sep + '**' + path.sep + '*', this.setup);
-				if (this.server) {
-					this.cleanEmptyFoldersRecursively(this.in);
-				}
-			}
+	if (inPath != null && inPath !== undefined) {
+		log('');
+		log('input: ' + inPath + '\n');
+		// if the input path is a directory send it straight to the setup function
+		// else glob for leaves of the fs
+		if (!fs.statSync(inPath).isDirectory()) {
+			setup(null, [inPath]);
 		} else {
-			this.error('required input path not specified');
+			// looks for files with no extensions, because sometimes DICOM files
+			// will be improperly named
+			glob([inPath + '/**/*', inPath + '/**/*.dcm', inPath + '/**/*.DCM'], setup);
+			if (server) {
+				cleanEmptyFoldersRecursively(inPath);
+			}
 		}
+	} else {
+		error('required input path not specified');
 	}
 }
-
-module.exports = new automaDICOM();

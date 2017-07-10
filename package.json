@@ -1,24 +1,26 @@
 {
-	"name": "automaDICOM",
-	"version": "v0.0.0",
-	"description": "Utility",
-	"main": "main.js",
-	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
-	},
-	"repository": {
-		"type": "git",
-		"url": "/Users/qashto/Dropbox/web/automaDICOM/.git"
-	},
-	"author": "Quinton Ashley",
-	"license": "UNLICENSED",
-	"dependencies": {
-		"csv-string": "^2.3.2",
-		"dwv": "^0.19.2",
-		"fs-path": "0.0.23",
-		"glob": "^7.1.2",
-		"mv": "^2.1.1",
-		"node-cleanup": "^2.1.2",
-		"open": "0.0.5"
-	}
+  "author": "Quinton Ashley",
+  "dependencies": {
+    "chalk": "^2.0.1",
+    "csv-string": "^2.3.2",
+    "dwv": "^0.19.2",
+    "fs-path": "0.0.23",
+    "glob": "^7.1.2",
+    "minimist": "^1.2.0",
+    "mv": "^2.1.1",
+    "node-cleanup": "^2.1.2",
+    "open": "0.0.5"
+  },
+  "description": "CLI automatic DICOM editor",
+  "license": "MIT",
+  "main": "main.js",
+  "name": "automaDICOM",
+  "repository": {
+    "type": "git",
+    "url": "/Users/qashto/Dropbox/web/automaDICOM/.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "v0.0.0"
 }
