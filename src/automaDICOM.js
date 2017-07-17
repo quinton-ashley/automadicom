@@ -12,10 +12,10 @@ module.exports = function (inPath, outPath, options) {
 	const spawn = require('child_process').spawn;
 
 	// CLI options
-	const list = (options.l == true) ? true : false;
-	const server = (options.S == true) ? true : false;
-	const specialFix = (options.f == true) ? true : false;
-	const verbose = (options.s == true) ? false : true;
+	const list = (options.l) ? true : false;
+	const server = (options.S) ? true : false;
+	const specialFix = (options.f) ? true : false;
+	const verbose = (options.s) ? false : true;
 
 	const log = console.log;
 
@@ -119,7 +119,7 @@ module.exports = function (inPath, outPath, options) {
 				if (typeof value !== 'string') {
 					error(`${tag} ${value}
 Dates must be entered as a String in a standard format, ex:'YYYYMMDD'
-`);
+					`);
 				}
 				let isYear = (parseInt(value.slice(0, 4)) >= 1900);
 				let isMonth = (parseInt(value.slice(4, 6)) <= 12);
@@ -127,7 +127,7 @@ Dates must be entered as a String in a standard format, ex:'YYYYMMDD'
 				if ((!isYear || !isMonth || !isDay)) {
 					log(`${tag} ${value}
 Dates must be entered as a String in a standard format, ex:'YYYYMMDD'
-`);
+					`);
 				}
 				break;
 			case 'AcquisitionTime':
@@ -138,7 +138,7 @@ Dates must be entered as a String in a standard format, ex:'YYYYMMDD'
 				if (typeof value !== 'string') {
 					error(`${tag} ${value}
 Times must be entered as a String in a standard format, ex:'HHMMSS'
-`);
+					`);
 				}
 				break;
 			default:
@@ -162,7 +162,7 @@ Times must be entered as a String in a standard format, ex:'HHMMSS'
 Error: failed to load ${file.slice(0, file.length-4)}
 This file does not have an extension and is not a DICOM image.
 Please give this file a proper extension or remove it from the input directory.
-`);
+			`);
 			return;
 		}
 		// get the tags
@@ -235,7 +235,7 @@ Please give this file a proper extension or remove it from the input directory.
 		}
 		if (specialFix) {
 			let mod = [newPath, '-i', 'ImageLaterality=' + fulfillTagReqs("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')", elements, values), '-i', 'InstitutionName=Marin Breast Health'];
-			let dcmodify = spawn(__dirname + '/dcmodify', mod);
+			let dcmodify = spawn(__dirname + '/src/dcmodify', mod);
 
 			dcmodify.stdout.on('data', (data) => {
 				log(`stdout: ${data}`);
