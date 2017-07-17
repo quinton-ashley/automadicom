@@ -27,7 +27,11 @@ module.exports = function (inputs, options) {
 	}
 	inputs.forEach((input) => {
 		if (fs.statSync(input).isDirectory()) {
-			files = search(/^(.*\.dcm|.*\.\d+|[^.]+)$/gm, input);
+			try {
+				files.concat(search(/^(.*\.dcm|.*\.\d+|[^.]+)$/gm, input));
+			} catch (err) {
+				log(err);
+			}
 		} else {
 			error('input must be a directory');
 		}
