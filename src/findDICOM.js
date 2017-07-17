@@ -1,4 +1,5 @@
 module.exports = function (inputs, options) {
+	const chalk = require('chalk'); // open source terminal text coloring library
 	const dwv = require('dwv'); // open source DICOM parser, viewer, and writer
 	const fs = require('fs'); // built-in node.js file system library
 	const fsPath = require('fs-path'); // open source high level fs function
