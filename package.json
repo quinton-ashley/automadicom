@@ -17,12 +17,11 @@
     "csv-string": "^2.3.2",
     "dwv": "^0.19.2",
     "fs-path": "0.0.23",
-    "glob": "^7.1.2",
     "minimist": "^1.2.0",
-    "multi-glob": "^1.0.1",
     "mv": "^2.1.1",
     "node-cleanup": "^2.1.2",
-    "open": "0.0.5"
+    "open": "0.0.5",
+    "recursive-search": "^1.0.1"
   },
   "description": "CLI automatic DICOM editor",
   "entry point": "main.js",
