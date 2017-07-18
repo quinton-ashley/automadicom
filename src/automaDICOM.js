@@ -4,11 +4,11 @@ module.exports = function (inPath, outPath, options) {
 	const dwv = require('dwv'); // open source DICOM parser, viewer, and writer
 	const fs = require('fs'); // built-in node.js file system library
 	const fsPath = require('fs-path'); // open source high level fs function
-	const glob = require('multi-glob').glob; // open source glob capability for node
 	const mv = require('mv'); // open source mv capability for node
 	const open = require('open'); // open source web browser URL opener
 	const path = require('path'); // built-in node.js path library
 	const process = require('process'); // built-in node.js process library
+	const search = require('recursive-search').recursiveSearchSync;
 	const spawn = require('child_process').spawn;
 
 	// CLI options
@@ -23,7 +23,7 @@ module.exports = function (inPath, outPath, options) {
 	let tags = [];
 	let rules = [];
 	let newPaths = [];
-	let append = __dirname + '/usr/append.csv';
+	let append = __dirname + '/../usr/append.csv';
 	if (outPath != null && outPath !== undefined) {
 		append = fs.readFileSync(append, 'utf8');
 		append = CSV.parse(append);
@@ -194,7 +194,6 @@ Please give this file a proper extension or remove it from the input directory.
 				log(`${tags[i]} = ${value}`);
 			});
 		}
-		log(dwvRules);
 		// the rules are applied immediately after they are set
 		writer.rules = dwvRules;
 		// buffer gets the modified DICOM file
@@ -252,12 +251,12 @@ Please give this file a proper extension or remove it from the input directory.
 		}
 	};
 
-	const setup = (err, matches) => {
+	const setup = (matches) => {
 		files = matches;
 		if (files === undefined || files.length == 0) {
 			error('invalid path, no files found');
 		}
-		let lines = __dirname + '/usr/rules.csv';
+		let lines = __dirname + '/../usr/rules.csv';
 		lines = fs.readFileSync(lines, 'utf8');
 		lines = CSV.parse(lines, ';');
 		if (lines.length <= 0) {
@@ -288,11 +287,11 @@ Please give this file a proper extension or remove it from the input directory.
 		// if the input path is a directory send it straight to the setup function
 		// else glob for leaves of the fs
 		if (!fs.statSync(inPath).isDirectory()) {
-			setup(null, [inPath]);
+			setup([inPath]);
 		} else {
 			// looks for files with no extensions, because sometimes DICOM files
 			// will be improperly named
-			glob([inPath + '/**/*', inPath + '/**/*.dcm', inPath + '/**/*.DCM'], setup);
+			setup(search(/^(.*\.dcm|.*\.DCM|.*\.\d+|[^.]+)$/gm, inPath));
 			if (server) {
 				cleanEmptyFoldersRecursively(inPath);
 			}

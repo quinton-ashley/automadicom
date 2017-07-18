@@ -14,8 +14,6 @@ module.exports = function (inputs, options) {
 
 	const log = console.log;
 
-	var files = [];
-
 	const error = (err) => {
 		log(chalk.red('Error: ' + err));
 		process.exit(1);
@@ -28,18 +26,12 @@ module.exports = function (inputs, options) {
 	inputs.forEach((input) => {
 		if (fs.statSync(input).isDirectory()) {
 			try {
-				files.concat(search(/^(.*\.dcm|.*\.\d+|[^.]+)$/gm, input));
+				log(search(/^(.*\.dcm|.*\.DCM|.*\.\d+|[^.]+)$/gm, input));
 			} catch (err) {
 				log(err);
 			}
 		} else {
 			error('input must be a directory');
 		}
-	});
-	if (files === undefined || files.length == 0) {
-		error('invalid path, no files found');
-	}
-	files.forEach((file) => {
-		log(file);
 	});
 }
