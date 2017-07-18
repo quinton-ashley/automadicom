@@ -25,8 +25,14 @@ module.exports = function (inputs, options) {
 	}
 	inputs.forEach((input) => {
 		if (fs.statSync(input).isDirectory()) {
+			log(input);
 			try {
-				log(search(/^(.*\.dcm|.*\.DCM|.*\.\d+|[^.]+)$/gm, input));
+				let filesString = input;
+				let files = search(/^(.*\.dcm|.*\.DCM|.*\.\d+|[^.]+)$/gm, input);
+				files.forEach((file) => {
+					filesString += '\r\n' + file;
+				});
+				fs.writeFileSync(`${__dirname}/../usr/${path.basename(input).trim()}.txt`, filesString);
 			} catch (err) {
 				log(err);
 			}

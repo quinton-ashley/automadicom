@@ -268,7 +268,7 @@ Please give this file a proper extension or remove it from the input directory.
 		});
 
 		for (let i = 0; i < files.length; i++) {
-			if ((!fs.statSync(files[i]).isDirectory()) && path.parse(files[i]).ext == '') {
+			if ((!fs.statSync(files[i]).isDirectory()) && path.parse(files[i]).ext == '' && !files[i].includes('DICOMDIR')) {
 				fs.renameSync(files[i], files[i] += '.dcm');
 			}
 			if (path.parse(files[i]).ext == '.dcm' || path.parse(files[i]).ext == '.DCM') {
