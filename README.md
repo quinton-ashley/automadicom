@@ -72,20 +72,17 @@ In the example below the `cd` command means change directory.  Using `sudo` will
 If you are on Windows open up Git Bash and use this format:
 ```
 cd '/c/pathOf/automaDICOM/'
-sudo npm i -g
-automaDICOM '/c/pathTo/imagesDir/or/img.dcm' '/c/optionalPathTo/outputDir'
+node main.js '/c/pathTo/imagesDir/or/img.dcm' '/c/optionalPathTo/outputDir'
 ```
 If you are on Windows and don't have Git Bash, open up PowerShell and use this format:
 ```
 cd "C:\pathOf\automaDICOM"
-sudo npm i -g
-automaDICOM "C:\pathTo\imagesDir\or\img.dcm" "C:\optionalPathTo\outputDir"
+node main.js "C:\pathTo\imagesDir\or\img.dcm" "C:\optionalPathTo\outputDir"
 ```
 If you are on Mac or Linux open up Terminal and use this format:
 ```
 cd /pathOf/automaDICOM/
-sudo npm i -g
-automaDICOM /pathTo/imagesDir/or/img.dcm /optionalPathTo/outputDir
+node main.js /pathTo/imagesDir/or/img.dcm /optionalPathTo/outputDir
 ```
 Note that you do not have to specify the paths to the `rules.csv` or `append.csv`.  automaDICOM uses the corresponding files in the `usr` folder automatically so don't move them!  automaDICOM will only use the files with those exact names so if you want to save a rules or append file for later just name it differently, for example `rulesForKnees.csv`.
 ## EULA
