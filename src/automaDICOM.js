@@ -157,9 +157,8 @@ Times must be entered as a String in a standard format, ex:'HHMMSS'
 			// parse the array buffer of the file
 			parser.parse(new Uint8Array(fs.readFileSync(file)).buffer);
 		} catch (err) {
-			fs.renameSync(file, file.slice(0, file.length - 4));
 			log(`
-Error: failed to load ${file.slice(0, file.length-4)}
+Error: failed to load ${file}
 This file does not have an extension and is not a DICOM image.
 Please give this file a proper extension or remove it from the input directory.
 			`);
@@ -267,10 +266,7 @@ Please give this file a proper extension or remove it from the input directory.
 		});
 
 		for (let i = 0; i < files.length; i++) {
-			if ((!fs.statSync(files[i]).isDirectory()) && path.parse(files[i]).ext == '' && !files[i].includes('DICOMDIR')) {
-				fs.renameSync(files[i], files[i] += '.dcm');
-			}
-			if (path.parse(files[i]).ext == '.dcm' || path.parse(files[i]).ext == '.DCM') {
+			if ((!fs.statSync(files[i]).isDirectory()) && !files[i].includes('DICOMDIR')) {
 				try {
 					edit(files[i], files);
 				} catch (err) {
