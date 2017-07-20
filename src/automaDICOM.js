@@ -251,8 +251,7 @@ Please give this file a proper extension or remove it from the input directory.
 		}
 	};
 
-	const setup = (matches) => {
-		files = matches;
+	const setup = () => {
 		if (files === undefined || files.length == 0) {
 			error('invalid path, no files found');
 		}
@@ -287,11 +286,13 @@ Please give this file a proper extension or remove it from the input directory.
 		// if the input path is a directory send it straight to the setup function
 		// else glob for leaves of the fs
 		if (!fs.statSync(inPath).isDirectory()) {
-			setup([inPath]);
+			files = [inPath];
+			setup();
 		} else {
 			// looks for files with no extensions, because sometimes DICOM files
 			// will be improperly named
-			setup(search(/^(.*\.dcm|.*\.DCM|.*\.\d+|[^.]+)$/gm, inPath));
+			files = search(/^(.*\.dcm|.*\.DCM|.*\.\d+|[^.]+)$/gm, inPath);
+			setup();
 			if (server) {
 				cleanEmptyFoldersRecursively(inPath);
 			}
