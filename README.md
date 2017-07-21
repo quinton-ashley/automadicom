@@ -1,6 +1,10 @@
 # automaDICOM
 Automatic DICOM tag value editor that uses dynamically evaluated rules to modify DICOM tag values.
-## Installation and Requirements
+## Requirements
+1. [Node.js and npm](https://nodejs.org)
+2. [Chrome](https://www.google.com/chrome/browser/desktop/index.html)
+3. (highly reccomended) [git](https://git-scm.com/downloads) for Git Bash
+## Installation
 1. To install automaDICOM you can use git or go to the [GitHub page](https://github.com/quinton-ashley/automaDICOM) and download and extract the ZIP file.  I highly recommend installing both [git](https://git-scm.com/downloads) and the [GitHub Desktop app](https://desktop.github.com/).  This will make updating automaDICOM easy!  You can use all the default install settings.
 2. Run the GitHub Desktop app.  You do not need to have a GitHub account or login to use this app, just skip those steps in the setup.  Click on "File" then "Clone Repository" in the toolbar, enter `quinton-ashley/automaDICOM`, and click the "Clone" button.  Look for automaDICOM in the GitHub folder of your Documents folder to verify the installation.  Anytime there is an update you can just open up the GitHub Desktop app and press the "Sync" button on macOS or press "Fetch origin" then "Pull" on Windows.  You'd have to download and extract a ZIP folder from the GitHub page every time you wanted to update if you weren't using git!
 3. Node.js and npm are required to run automaDICOM.  Node.js is a JavaScript runtime built on Chrome's V8 JavaScript engine.  Node.js' package ecosystem, npm, is the largest ecosystem of open source libraries in the world!  The backbone of this project is the incredible npm package, [DWV](https://github.com/ivmartel/dwv).  Install the LTS version of [Node.js and npm](https://nodejs.org).
