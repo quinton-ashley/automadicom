@@ -1,54 +1,60 @@
 {
-	"author": "Quinton Ashley",
-	"bin": {
-		"automaDICOM": "./main.js"
-	},
-	"bugs": {
-		"url": "https://github.com/quinton-ashley/automaDICOM/issues"
-	},
-	"contributors": [
-		{
-			"name": "Quinton Ashley",
-			"email": "qashto@gmail.com"
+  "author": "Quinton Ashley",
+  "bin": {
+    "automaDICOM": "./main.js"
+  },
+  "bugs": {
+    "url": "https://github.com/quinton-ashley/automaDICOM/issues"
+  },
+  "contributors": [
+    {
+      "name": "Quinton Ashley",
+      "email": "qashto@gmail.com"
     }
   ],
-	"dependencies": {
-		"chalk": "^2.0.1",
-		"csv-string": "^2.3.2",
-		"dwv": "^0.19.2",
-		"fs-path": "0.0.23",
-		"minimist": "^1.2.0",
-		"mv": "^2.1.1",
-		"node-cleanup": "^2.1.2",
-		"open": "0.0.5",
-		"recursive-search": "^1.0.1"
-	},
-	"description": "CLI automatic DICOM editor",
-	"directories": {
-		"src": "src"
-	},
-	"entry point": "main.js",
-	"keywords": [
+  "dependencies": {
+    "bootstrap": "^3.3.7",
+    "chalk": "^2.0.1",
+    "csv-string": "^2.3.2",
+    "dwv": "^0.19.2",
+    "express": "^4.15.3",
+    "fs-path": "0.0.23",
+    "jquery": "^3.2.1",
+    "minimist": "^1.2.0",
+    "moment": "^2.18.1",
+    "mv": "^2.1.1",
+    "node-cleanup": "^2.1.2",
+    "open": "0.0.5",
+    "pug": "^2.0.0-rc.2",
+    "recursive-search": "^1.0.1",
+    "tether": "^1.4.0"
+  },
+  "description": "CLI automatic DICOM editor",
+  "directories": {
+    "src": "src"
+  },
+  "entry point": "main.js",
+  "keywords": [
     "dicom",
     "batch",
     "metadata editor",
-		"dwv"
+    "dwv"
   ],
-	"license": "MIT",
-	"main": "main.js",
-	"maintainers": [
-		{
-			"name": "Quinton Ashley",
-			"email": "qashto@gmail.com"
+  "license": "MIT",
+  "main": "main.js",
+  "maintainers": [
+    {
+      "name": "Quinton Ashley",
+      "email": "qashto@gmail.com"
     }
   ],
-	"name": "automaDICOM",
-	"repository": {
-		"type": "git",
-		"url": "/Users/qashto/Dropbox/web/automaDICOM/.git"
-	},
-	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
-	},
-	"version": "v0.2.6"
+  "name": "automaDICOM",
+  "repository": {
+    "type": "git",
+    "url": "/Users/qashto/Dropbox/web/automaDICOM/.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "v0.2.6"
 }

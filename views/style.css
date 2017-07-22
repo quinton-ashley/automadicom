@@ -1,0 +1,47 @@
+.selected {
+	background-color: brown;
+	color: #FFF;
+}
+
+.hiddenRow {
+    padding: 0 !important;
+}
+qt {
+	color: #818c46;
+}
+
+nav {
+	background-color: #f9f8ef;
+}
+
+div.progress-bar.qt {
+	color: #888c90;
+	background-color: #818c46;
+}
+
+a.qt:hover {
+	color: #616c36;
+}
+
+a.qt {
+	color: #818c46;
+}
+
+button.btn.btn-secondary.qt {
+	color: #ffffff;
+	background-color: #818c46;
+}
+
+button.btn.btn-secondary.qt:hover {
+	color: #ffffff;
+	background-color: #616c36;
+}
+
+.nav-link small {
+  display:block;
+  font-size:10px;
+}
+
+nav.qt, form.qt {
+	background-color: #ffffff;
+}

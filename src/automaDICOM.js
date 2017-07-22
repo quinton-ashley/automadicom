@@ -1,7 +1,10 @@
+const log = console.log;
+
 module.exports = function (inPath, outPath, options) {
 	const chalk = require('chalk'); // open source terminal text coloring library
 	const CSV = require('csv-string'); // open source csv parser and stringifier
 	const dwv = require('dwv'); // open source DICOM parser, viewer, and writer
+	const express = require('express');
 	const fs = require('fs'); // built-in node.js file system library
 	const fsPath = require('fs-path'); // open source high level fs function
 	const mv = require('mv'); // open source mv capability for node
@@ -13,11 +16,9 @@ module.exports = function (inPath, outPath, options) {
 
 	// CLI options
 	const list = (options.l) ? true : false;
-	const server = (options.S) ? true : false;
+	const continuous = (options.c) ? true : false;
 	const specialFix = (options.f) ? true : false;
 	const verbose = (options.s) ? false : true;
-
-	const log = console.log;
 
 	let files = [];
 	let tags = [];
@@ -227,8 +228,8 @@ Please give this file a proper extension or remove it from the input directory.
 
 		// fsPath makes any new directories if necessary
 		fsPath.writeFileSync(newPath, Buffer(new Uint8Array(buffer)));
-		if (server) {
-			// if running in server mode (continuous operation) delete the original file
+		if (continuous) {
+			// if running in continuous mode (continuous operation) delete the original file
 			fs.unlink(file);
 		}
 		if (specialFix) {
@@ -289,11 +290,32 @@ Please give this file a proper extension or remove it from the input directory.
 			// will be improperly named
 			files = search(/^(.*\.dcm|.*\.DCM|.*\.\d+|[^.]+)$/gm, inPath);
 			setup();
-			if (server) {
+			if (continuous) {
 				cleanEmptyFoldersRecursively(inPath);
 			}
 		}
 	} else {
-		error('required input path not specified');
+		// express is used to serve pages
+		var app = express();
+		// the static function allows us to retreive the content in the specified directory
+		app.use('/img', express.static(__dirname + '/../img'));
+		// sets the views folder as the main folder
+		app.set('views', __dirname + '/../views');
+		// sets up pug as the view engine, pug is rendered to html dynamically, like php but better
+		app.set('view engine', 'pug');
+
+		// when the user requests the landing page, render it with pug
+		app.get('/', (req, res) => {
+			res.render('index', {
+				title: 'automaDICOM - ' + new Date().toString()
+			});
+		});
+
+		// use local port
+		const port = 10002;
+		const server = app.listen(port, () => {
+			log('server listening on port ' + port);
+			open('http://localhost:' + port + '/');
+		});
 	}
 }
