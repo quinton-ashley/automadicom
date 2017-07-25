@@ -1,10 +1,61 @@
 const log = console.log;
 
+
+exports.fulfillTagReqs = function (str, elements, tags, values) {
+
+	const getSubLevelTag = (tagReq) => {
+		switch (tagReq) {
+			case 'CodeMeaning':
+				return elements.getFromName('ViewCodeSequence')['x00080104'].value[0];
+			case 'FrameLaterality':
+				return elements.getFromName('SharedFunctionalGroupsSequence')['x00209071'].value[0]['x00209072'].value[0];
+			default:
+		}
+	}
+
+	let match, reqTag, tagReq;
+	let useOgVal = false;
+	let editIdx = -1;
+	let regex = /\$[\w|\-|_]*/i;
+	// loops while a match is found
+	while (match = regex.exec(str)) {
+		useOgVal = (match[0][1] == '$');
+		tagReq = match[0].slice(((useOgVal) ? 2 : 1), match[0].length);
+		// if the original value of the tag is requested
+		// or if the tag requested is not found in tags
+		// or if the tag requested is found in tags but does not yet have a value
+		if (useOgVal || (editIdx = tags.indexOf(tagReq)) <= -1 || editIdx >= values.length) {
+			// get the tag from the zero level DICOM by name
+			reqTag = elements.getFromName(tagReq);
+			if (reqTag == null) {
+				reqTag = getSubLevelTag(tagReq);
+			}
+			// if it's still null it wasn't found
+			if (reqTag == null) {
+				log('Error: ' + tagReq + ' tag not found!!');
+				reqTag = 'null';
+			}
+			reqTag = reqTag.replace('\u0000', '');
+		} else {
+			// get the tag from the values array
+			reqTag = values[editIdx];
+		}
+		// replace the request with the tag itself, the quotes are necessary
+		str = str.replace('$' + tagReq, `\'${reqTag}\'`);
+	}
+	// note that eval is used to evaluate user javascript dynamically!
+	// direct access to String methods gives users advanced control
+	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String
+	try {
+		str = eval(str);
+	} catch (err) {}
+	return str;
+}
+
 module.exports = function (inPath, outPath, options) {
 	const chalk = require('chalk'); // open source terminal text coloring library
 	const CSV = require('csv-string'); // open source csv parser and stringifier
 	const dwv = require('dwv'); // open source DICOM parser, viewer, and writer
-	const express = require('express');
 	const fs = require('fs'); // built-in node.js file system library
 	const fsPath = require('fs-path'); // open source high level fs function
 	const mv = require('mv'); // open source mv capability for node
@@ -24,12 +75,10 @@ module.exports = function (inPath, outPath, options) {
 	let tags = [];
 	let rules = [];
 	let newPaths = [];
-	let append = __dirname + '/../usr/append.csv';
-	if (outPath != null && outPath !== undefined) {
-		append = fs.readFileSync(append, 'utf8');
-		append = CSV.parse(append);
-	} else {
-		append = [];
+	let append;
+	let usr = {
+		rules: fs.readFileSync(__dirname + '/../usr/rules.csv', 'utf8'),
+		append: fs.readFileSync(__dirname + '/../usr/append.csv', 'utf8')
 	}
 
 	const error = (err) => {
@@ -58,56 +107,6 @@ module.exports = function (inPath, outPath, options) {
 			fs.rmdirSync(folder);
 			log('removed: ', folder);
 		}
-	}
-
-	const getSubLevelTag = (tagReq, elements) => {
-		switch (tagReq) {
-			case 'CodeMeaning':
-				return elements.getFromName('ViewCodeSequence')['x00080104'].value[0];
-			case 'FrameLaterality':
-				return elements.getFromName('SharedFunctionalGroupsSequence')['x00209071'].value[0]['x00209072'].value[0];
-			default:
-		}
-	}
-
-	const fulfillTagReqs = (str, elements, values) => {
-		let match, reqTag, tagReq;
-		let useOgVal = false;
-		let editIdx = -1;
-		let regex = /\$[\w|\-|_]*/i;
-		// loops while a match is found
-		while (match = regex.exec(str)) {
-			useOgVal = (match[0][1] == '$');
-			tagReq = match[0].slice(((useOgVal) ? 2 : 1), match[0].length);
-			// if the original value of the tag is requested
-			// or if the tag requested is not found in tags
-			// or if the tag requested is found in tags but does not yet have a value
-			if (useOgVal || (editIdx = tags.indexOf(tagReq)) <= -1 || editIdx >= values.length) {
-				// get the tag from the zero level DICOM by name
-				reqTag = elements.getFromName(tagReq);
-				if (reqTag == null) {
-					reqTag = getSubLevelTag(tagReq, elements);
-				}
-				// if it's still null it wasn't found
-				if (reqTag == null) {
-					log('Error: ' + tagReq + ' tag not found!!');
-					reqTag = 'null';
-				}
-				reqTag = reqTag.replace('\u0000', '');
-			} else {
-				// get the tag from the values array
-				reqTag = values[editIdx];
-			}
-			// replace the request with the tag itself, the quotes are necessary
-			str = str.replace('$' + tagReq, `\'${reqTag}\'`);
-		}
-		// note that eval is used to evaluate user javascript dynamically!
-		// direct access to String methods gives users advanced control
-		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String
-		try {
-			str = eval(str);
-		} catch (err) {}
-		return str;
 	}
 
 	const errorCheck = (tag, value) => {
@@ -182,7 +181,7 @@ Please give this file a proper extension or remove it from the input directory.
 		let values = [];
 		// rule objects conforms to the format the DICOM writer expects
 		tags.forEach((tag, i) => {
-			values.push(fulfillTagReqs(rules[i], elements, values));
+			values.push(exports.fulfillTagReqs(rules[i], tags, elements, values));
 			errorCheck(tag, values[i]);
 			dwvRules[tag] = {
 				action: 'replace',
@@ -204,9 +203,9 @@ Please give this file a proper extension or remove it from the input directory.
 		if (outPath != null && outPath !== undefined) {
 			dir = outPath;
 			for (i = 0; i < append.length - 1; i++) {
-				dir += '/' + fulfillTagReqs(append[i][0], elements, values);
+				dir += '/' + exports.fulfillTagReqs(append[i][0], elements, tags, values);
 			}
-			imgName = fulfillTagReqs(append[append.length - 1][0], elements, values);
+			imgName = exports.fulfillTagReqs(append[append.length - 1][0], elements, tags, values);
 			// at the end of this loop it is assured that a unique file name has been created
 			for (i = 0; newPath == '' || newPaths.includes(newPath) || fs.existsSync(newPath); i++) {
 				newPath = `${dir}/${imgName}_${i.toString()}.dcm`;
@@ -233,7 +232,7 @@ Please give this file a proper extension or remove it from the input directory.
 			fs.unlink(file);
 		}
 		if (specialFix) {
-			let mod = [newPath, '-i', 'ImageLaterality=' + fulfillTagReqs("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')", elements, values), '-i', 'InstitutionName=Marin Breast Health'];
+			let mod = [newPath, '-i', 'ImageLaterality=' + exports.fulfillTagReqs("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')", elements, tags, values), '-i', 'InstitutionName=Marin Breast Health'];
 			let dcmodify = spawn(__dirname + '/src/dcmodify', mod);
 
 			dcmodify.stdout.on('data', (data) => {
@@ -255,9 +254,7 @@ Please give this file a proper extension or remove it from the input directory.
 		if (files === undefined || files.length == 0) {
 			error('invalid path, no files found');
 		}
-		let lines = __dirname + '/../usr/rules.csv';
-		lines = fs.readFileSync(lines, 'utf8');
-		lines = CSV.parse(lines, ';');
+		let lines = CSV.parse(usr.rules, ';');
 		if (lines.length <= 0) {
 			error('rules files has no rules!');
 		}
@@ -277,9 +274,14 @@ Please give this file a proper extension or remove it from the input directory.
 		}
 	}
 
-	if (inPath != null && inPath !== undefined) {
+	const start = () => {
 		log('');
 		log('input: ' + inPath + '\n');
+		if (outPath != null && outPath !== undefined) {
+			append = CSV.parse(usr.append);
+		} else {
+			append = [];
+		}
 		// if the input path is a directory send it straight to the setup function
 		// else glob for leaves of the fs
 		if (!fs.statSync(inPath).isDirectory()) {
@@ -294,9 +296,23 @@ Please give this file a proper extension or remove it from the input directory.
 				cleanEmptyFoldersRecursively(inPath);
 			}
 		}
+	}
+
+	if (inPath != null && inPath !== undefined) {
+		start();
 	} else {
+		const express = require('express');
+		const bodyParser = require('body-parser');
+		const form = require('connect-form');
+
 		// express is used to serve pages
-		var app = express();
+		var app = module.exports = express(form({
+			keepExtensions: true,
+			uploadDir: './uploads'
+		}));
+		app.use(bodyParser.urlencoded({
+			extended: false
+		}));
 		// the static function allows us to retreive the content in the specified directory
 		app.use('/img', express.static(__dirname + '/../img'));
 		// sets the views folder as the main folder
@@ -307,8 +323,13 @@ Please give this file a proper extension or remove it from the input directory.
 		// when the user requests the landing page, render it with pug
 		app.get('/', (req, res) => {
 			res.render('index', {
-				title: 'automaDICOM - ' + new Date().toString()
+				title: 'automaDICOM - ' + new Date().toString(),
+				usr: usr
 			});
+		});
+
+		app.post('/submit', function (req, res) {
+			res.send(req.body);
 		});
 
 		// use local port

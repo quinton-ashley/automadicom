@@ -8,9 +8,24 @@ style
 title= title
 
 body
-p Hello
+form.form-inline.qt.rounded.mb-0(action='/submit' method='post'): div.container.col-12: div.form-group.row
+	div.input-group.input-group-sm.col-12.m-0.p-1
+		div.input-group-addon.col-2 Input File(s) or Directory
+		input.form-control.form-control-sm(id='input' type='file' webkitdirectory directory multiple)
+	div.input-group.input-group-sm.col-12.m-0.p-1
+		div.input-group-addon.col-2 Optional Output Directory
+		input.form-control.form-control-sm(id='output' type='file' webkitdirectory directory multiple)
+	div.input-group.input-group-sm.col-12.m-0.p-1
+		div.input-group-addon.col-2 ./usr/rules.csv
+		textarea.form-control.form-control-sm(id='rules' placeholder='user rules.csv file' type='text' rows='20') #{usr.rules}
+	div.input-group.input-group-sm.col-12.m-0.p-1
+		div.input-group-addon.col-2 ./usr/append.csv
+		textarea.form-control.form-control-sm(id='append' placeholder='user append.csv file' type='text' rows='10') #{usr.append}
+	div.input-group.input-group-sm.col-1.mx-auto.p-1
+		button.form-control.form-control-sm(type='submit') Start
 script
 	include ../node_modules/jquery/dist/jquery.min.js
 	include ../node_modules/moment/min/moment.min.js
 	include ../node_modules/tether/dist/js/tether.min.js
 	include ../node_modules/bootstrap/dist/js/bootstrap.min.js
+	
