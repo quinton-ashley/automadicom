@@ -2,6 +2,6 @@
 
 const selfUpdate = require('self-update-on-start');
 
-selfUpdate((code) => {
+selfUpdate(() => {
 	require('./src/main.js')();
 });

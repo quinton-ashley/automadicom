@@ -1,7 +1,17 @@
 const log = console.log;
 
+const chalk = require('chalk'); // open source terminal text coloring library
+const CSV = require('csv-string'); // open source csv parser and stringifier
+const dwv = require('dwv'); // open source DICOM parser, viewer, and writer
+const fs = require('fs'); // built-in node.js file system library
+const fsPath = require('fs-path'); // open source high level fs function
+const open = require('open'); // open source web browser URL opener
+const path = require('path'); // built-in node.js path library
+const process = require('process'); // built-in node.js process library
+const search = require('recursive-search').recursiveSearchSync;
+const spawn = require('child_process').spawn;
 
-exports.fulfillTagReqs = function (str, elements, tags, values) {
+exports.fulfillTagReqs = function (str, elements, tags, values, file) {
 
 	const getSubLevelTag = (tagReq) => {
 		switch (tagReq) {
@@ -9,6 +19,8 @@ exports.fulfillTagReqs = function (str, elements, tags, values) {
 				return elements.getFromName('ViewCodeSequence')['x00080104'].value[0];
 			case 'FrameLaterality':
 				return elements.getFromName('SharedFunctionalGroupsSequence')['x00209071'].value[0]['x00209072'].value[0];
+			case 'ImageName':
+				return path.parse(file).name;
 			default:
 		}
 	}
@@ -52,24 +64,13 @@ exports.fulfillTagReqs = function (str, elements, tags, values) {
 	return str;
 }
 
-module.exports = function (inPath, outPath, options) {
-	const chalk = require('chalk'); // open source terminal text coloring library
-	const CSV = require('csv-string'); // open source csv parser and stringifier
-	const dwv = require('dwv'); // open source DICOM parser, viewer, and writer
-	const fs = require('fs'); // built-in node.js file system library
-	const fsPath = require('fs-path'); // open source high level fs function
-	const mv = require('mv'); // open source mv capability for node
-	const open = require('open'); // open source web browser URL opener
-	const path = require('path'); // built-in node.js path library
-	const process = require('process'); // built-in node.js process library
-	const search = require('recursive-search').recursiveSearchSync;
-	const spawn = require('child_process').spawn;
-
+module.exports = function (inPath, outPath, opt) {
 	// CLI options
-	const list = (options.l) ? true : false;
-	const continuous = (options.c) ? true : false;
-	const specialFix = (options.f) ? true : false;
-	const verbose = (options.s) ? false : true;
+	const list = (opt.l) ? true : false;
+	const continuous = (opt.c) ? true : false;
+	const specialFix = (opt.f) ? true : false;
+	const verbose = (opt.s) ? false : true;
+	const makeEdits = (opt.m) ? false : true;
 
 	let files = [];
 	let tags = [];
@@ -149,7 +150,9 @@ Times must be entered as a String in a standard format, ex:'HHMMSS'
 		let i = 0;
 		// loads the parser and writer from the open source library DWV
 		let parser = new dwv.dicom.DicomParser();
-		let writer = new dwv.dicom.DicomWriter();
+		if (makeEdits) {
+			let writer = new dwv.dicom.DicomWriter();
+		}
 		if (verbose) {
 			log('loading: ' + file);
 		}
@@ -169,34 +172,36 @@ Please give this file a proper extension or remove it from the input directory.
 		if (list) {
 			log(elements.dump());
 		}
-		// the default rule must be included, it simply copies all other tag's value(s)
-		// hard coding this inside this program pervents users from screwing it up
-		// also for user convience the action of their rules is always 'replace'
-		let dwvRules = {
-			default: {
-				action: 'copy',
-				value: null
-			}
-		};
 		let values = [];
-		// rule objects conforms to the format the DICOM writer expects
-		tags.forEach((tag, i) => {
-			values.push(exports.fulfillTagReqs(rules[i], tags, elements, values));
-			errorCheck(tag, values[i]);
-			dwvRules[tag] = {
-				action: 'replace',
-				value: values[i]
+		if (makeEdits) {
+			// the default rule must be included, it simply copies all other tag's value(s)
+			// hard coding this inside this program pervents users from screwing it up
+			// also for user convience the action of their rules is always 'replace'
+			let dwvRules = {
+				default: {
+					action: 'copy',
+					value: null
+				}
 			};
-		});
-		if (verbose) {
-			values.forEach((value, i) => {
-				log(`${tags[i]} = ${value}`);
+			// rule objects conforms to the format the DICOM writer expects
+			tags.forEach((tag, i) => {
+				values.push(exports.fulfillTagReqs(rules[i], tags, elements, values));
+				errorCheck(tag, values[i]);
+				dwvRules[tag] = {
+					action: 'replace',
+					value: values[i]
+				};
 			});
+			if (verbose) {
+				values.forEach((value, i) => {
+					log(`${tags[i]} = ${value}`);
+				});
+			}
+			// the rules are applied immediately after they are set
+			writer.rules = dwvRules;
+			// buffer gets the modified DICOM file
+			let buffer = writer.getBuffer(parser.getRawDicomElements());
 		}
-		// the rules are applied immediately after they are set
-		writer.rules = dwvRules;
-		// buffer gets the modified DICOM file
-		let buffer = writer.getBuffer(parser.getRawDicomElements());
 		// let's decide where to write the file!
 		let dir, imgName;
 		let newPath = '';
@@ -205,12 +210,13 @@ Please give this file a proper extension or remove it from the input directory.
 			for (i = 0; i < append.length - 1; i++) {
 				dir += '/' + exports.fulfillTagReqs(append[i][0], elements, tags, values);
 			}
-			imgName = exports.fulfillTagReqs(append[append.length - 1][0], elements, tags, values);
+			imgName = exports.fulfillTagReqs(append[append.length - 1][0], elements, tags, values, file);
 			// at the end of this loop it is assured that a unique file name has been created
 			for (i = 0; newPath == '' || newPaths.includes(newPath) || fs.existsSync(newPath); i++) {
-				newPath = `${dir}/${imgName}_${i.toString()}.dcm`;
-				if (newPath == file) {
-					break;
+				if (i >= 1) {
+					newPath = `${dir}/${imgName}_${i.toString()}.dcm`;
+				} else {
+					newPath = `${dir}/${imgName}.dcm`;
 				}
 			}
 		} else {
@@ -226,7 +232,11 @@ Please give this file a proper extension or remove it from the input directory.
 		}
 
 		// fsPath makes any new directories if necessary
-		fsPath.writeFileSync(newPath, Buffer(new Uint8Array(buffer)));
+		if (makeEdits) {
+			fsPath.writeFileSync(newPath, Buffer(new Uint8Array(buffer)));
+		} else {
+			fsPath.copySync(file, newPath);
+		}
 		if (continuous) {
 			// if running in continuous mode (continuous operation) delete the original file
 			fs.unlink(file);
@@ -262,6 +272,11 @@ Please give this file a proper extension or remove it from the input directory.
 			tags.push(line[0]);
 			rules.push(line[1]);
 		});
+		if (outPath != null && outPath !== undefined) {
+			append = CSV.parse(usr.append);
+		} else {
+			append = [];
+		}
 
 		for (let i = 0; i < files.length; i++) {
 			if ((!fs.statSync(files[i]).isDirectory()) && !files[i].includes('DICOMDIR')) {
@@ -277,17 +292,9 @@ Please give this file a proper extension or remove it from the input directory.
 	const start = () => {
 		log('');
 		log('input: ' + inPath + '\n');
-		if (outPath != null && outPath !== undefined) {
-			append = CSV.parse(usr.append);
-		} else {
-			append = [];
-		}
 		// if the input path is a directory send it straight to the setup function
 		// else glob for leaves of the fs
-		if (!fs.statSync(inPath).isDirectory()) {
-			files = [inPath];
-			setup();
-		} else {
+		if (fs.statSync(inPath).isDirectory()) {
 			// looks for files with no extensions, because sometimes DICOM files
 			// will be improperly named
 			files = search(/^(.*\.dcm|.*\.DCM|.*\.\d+|[^.]+)$/gm, inPath);
@@ -295,6 +302,9 @@ Please give this file a proper extension or remove it from the input directory.
 			if (continuous) {
 				cleanEmptyFoldersRecursively(inPath);
 			}
+		} else {
+			files = [inPath];
+			setup();
 		}
 	}
 
@@ -339,4 +349,5 @@ Please give this file a proper extension or remove it from the input directory.
 			open('http://localhost:' + port + '/');
 		});
 	}
+	//	return newPaths;
 }
