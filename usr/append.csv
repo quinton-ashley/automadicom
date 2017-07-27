@@ -1,3 +1,6 @@
-$PatientID
-$Modality
-$SeriesDescription
+'UCSD_' + $PatientID.slice(0,3)
+$PatientID.slice(0, 7)
+$PatientID.slice(8, 9)
+$StudyDate.trim()
+(($Modality.trim() == 'MG')?'Mammo':(($Manufacturer.includes('Techniscan'))?'QT':'HHUS'))
+$ImageName.trim()

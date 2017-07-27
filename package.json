@@ -20,7 +20,7 @@
     "csv-string": "^2.3.2",
     "dwv": "^0.19.2",
     "express": "^4.15.3",
-    "fs-path": "0.0.23",
+    "fs-extra": "^4.0.0",
     "minimist": "^1.2.0",
     "moment": "^2.18.1",
     "node-cleanup": "^2.1.2",

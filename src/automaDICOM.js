@@ -3,8 +3,7 @@ const log = console.log;
 const chalk = require('chalk'); // open source terminal text coloring library
 const CSV = require('csv-string'); // open source csv parser and stringifier
 const dwv = require('dwv'); // open source DICOM parser, viewer, and writer
-const fs = require('fs'); // built-in node.js file system library
-const fsPath = require('fs-path'); // open source high level fs function
+const fs = require('fs-extra'); // built-in node.js file system library
 const open = require('open'); // open source web browser URL opener
 const path = require('path'); // built-in node.js path library
 const process = require('process'); // built-in node.js process library
@@ -60,26 +59,29 @@ exports.fulfillTagReqs = function (str, elements, tags, values, file) {
 	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String
 	try {
 		str = eval(str);
-	} catch (err) {}
+	} catch (err) {
+		log(chalk.red('eval failed for request: ' + str));
+		throw err;
+	}
 	return str;
 }
 
-module.exports = function (inPath, outPath, opt) {
-	// CLI options
-	const list = (opt.l) ? true : false;
-	const continuous = (opt.c) ? true : false;
-	const specialFix = (opt.f) ? true : false;
-	const verbose = (opt.s) ? false : true;
-	const makeEdits = (opt.m) ? false : true;
+module.exports = function (args, opt) {
+	// CLI args
+	const inPath = args[0];
+	const outPath = args[1];
+	const rulesPath = ((args[2]) ? args[2] : __dirname + '/../usr/rules.csv');
+	const appendPath = ((args[3]) ? args[3] : __dirname + '/../usr/append.csv');
 
 	let files = [];
 	let tags = [];
 	let rules = [];
 	let newPaths = [];
+	let failedIndexes = [];
 	let append;
 	let usr = {
-		rules: fs.readFileSync(__dirname + '/../usr/rules.csv', 'utf8'),
-		append: fs.readFileSync(__dirname + '/../usr/append.csv', 'utf8')
+		rules: fs.readFileSync(rulesPath, 'utf8'),
+		append: fs.readFileSync(appendPath, 'utf8')
 	}
 
 	const error = (err) => {
@@ -150,34 +152,35 @@ Times must be entered as a String in a standard format, ex:'HHMMSS'
 		let i = 0;
 		// loads the parser and writer from the open source library DWV
 		let parser = new dwv.dicom.DicomParser();
-		if (makeEdits) {
-			let writer = new dwv.dicom.DicomWriter();
+		let writer;
+		if (!opt.m) {
+			writer = new dwv.dicom.DicomWriter();
 		}
-		if (verbose) {
+		if (!opt.s) {
 			log('loading: ' + file);
 		}
 		try {
 			// parse the array buffer of the file
 			parser.parse(new Uint8Array(fs.readFileSync(file)).buffer);
 		} catch (err) {
-			log(`
+			throw `
 Error: failed to load ${file}
 This file does not have an extension and is not a DICOM image.
 Please give this file a proper extension or remove it from the input directory.
-			`);
-			return;
+			`;
 		}
 		// get the tags
 		let elements = parser.getDicomElements();
-		if (list) {
+		if (opt.l) {
 			log(elements.dump());
 		}
+		let buffer, dwvRules;
 		let values = [];
-		if (makeEdits) {
+		if (!opt.m) {
 			// the default rule must be included, it simply copies all other tag's value(s)
 			// hard coding this inside this program pervents users from screwing it up
 			// also for user convience the action of their rules is always 'replace'
-			let dwvRules = {
+			dwvRules = {
 				default: {
 					action: 'copy',
 					value: null
@@ -185,14 +188,14 @@ Please give this file a proper extension or remove it from the input directory.
 			};
 			// rule objects conforms to the format the DICOM writer expects
 			tags.forEach((tag, i) => {
-				values.push(exports.fulfillTagReqs(rules[i], tags, elements, values));
+				values.push(exports.fulfillTagReqs(rules[i], elements, tags, values));
 				errorCheck(tag, values[i]);
 				dwvRules[tag] = {
 					action: 'replace',
 					value: values[i]
 				};
 			});
-			if (verbose) {
+			if (!opt.s) {
 				values.forEach((value, i) => {
 					log(`${tags[i]} = ${value}`);
 				});
@@ -200,12 +203,12 @@ Please give this file a proper extension or remove it from the input directory.
 			// the rules are applied immediately after they are set
 			writer.rules = dwvRules;
 			// buffer gets the modified DICOM file
-			let buffer = writer.getBuffer(parser.getRawDicomElements());
+			buffer = writer.getBuffer(parser.getRawDicomElements());
 		}
 		// let's decide where to write the file!
 		let dir, imgName;
 		let newPath = '';
-		if (outPath != null && outPath !== undefined) {
+		if (outPath) {
 			dir = outPath;
 			for (i = 0; i < append.length - 1; i++) {
 				dir += '/' + exports.fulfillTagReqs(append[i][0], elements, tags, values);
@@ -214,9 +217,9 @@ Please give this file a proper extension or remove it from the input directory.
 			// at the end of this loop it is assured that a unique file name has been created
 			for (i = 0; newPath == '' || newPaths.includes(newPath) || fs.existsSync(newPath); i++) {
 				if (i >= 1) {
-					newPath = `${dir}/${imgName}_${i.toString()}.dcm`;
+					newPath = `${dir}/${imgName}_${i.toString() + path.parse(file).ext}`;
 				} else {
-					newPath = `${dir}/${imgName}.dcm`;
+					newPath = `${dir}/${imgName + path.parse(file).ext}`;
 				}
 			}
 		} else {
@@ -226,24 +229,24 @@ Please give this file a proper extension or remove it from the input directory.
 			imgName = 'anon_' + path.parse(file).name + '.dcm';
 			newPath = dir + '/' + imgName;
 		}
-		newPaths.push(newPath);
-		if (verbose) {
+		if (!opt.s) {
 			log('writing: ' + newPath + '\n');
 		}
-
-		// fsPath makes any new directories if necessary
-		if (makeEdits) {
-			fsPath.writeFileSync(newPath, Buffer(new Uint8Array(buffer)));
+		// fs-extra makes any new directories if necessary
+		if (!opt.m) {
+			fs.outputFileSync(newPath, Buffer(new Uint8Array(buffer)));
 		} else {
-			fsPath.copySync(file, newPath);
+			fs.copySync(file, newPath);
 		}
-		if (continuous) {
-			// if running in continuous mode (continuous operation) delete the original file
+		newPaths.push(newPath);
+
+		if (opt.c) {
+			// if running in opt.c mode (opt.c operation) delete the original file
 			fs.unlink(file);
 		}
-		if (specialFix) {
+		if (opt.f) {
 			let mod = [newPath, '-i', 'ImageLaterality=' + exports.fulfillTagReqs("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')", elements, tags, values), '-i', 'InstitutionName=Marin Breast Health'];
-			let dcmodify = spawn(__dirname + '/src/dcmodify', mod);
+			let dcmodify = spawn(__dirname + '/dcmodify', mod);
 
 			dcmodify.stdout.on('data', (data) => {
 				log(`stdout: ${data}`);
@@ -265,26 +268,31 @@ Please give this file a proper extension or remove it from the input directory.
 			error('invalid path, no files found');
 		}
 		let lines = CSV.parse(usr.rules, ';');
-		if (lines.length <= 0) {
+		if (lines.length <= 1) {
 			error('rules files has no rules!');
 		}
 		lines.forEach((line) => {
 			tags.push(line[0]);
 			rules.push(line[1]);
 		});
-		if (outPath != null && outPath !== undefined) {
-			append = CSV.parse(usr.append);
+		if (outPath) {
+			append = CSV.parse(usr.append, ';');
 		} else {
 			append = [];
 		}
 
 		for (let i = 0; i < files.length; i++) {
-			if ((!fs.statSync(files[i]).isDirectory()) && !files[i].includes('DICOMDIR')) {
+			if ((!fs.statSync(files[i]).isDirectory()) && !files[i].match(/dir/i)) {
 				try {
 					edit(files[i], files);
 				} catch (err) {
-					log(err);
+					newPaths.push('failed');
+					failedIndexes.push(i);
+					log(chalk.red(err));
 				}
+			} else {
+				newPaths.push('failed');
+				failedIndexes.push(i);
 			}
 		}
 	}
@@ -297,9 +305,9 @@ Please give this file a proper extension or remove it from the input directory.
 		if (fs.statSync(inPath).isDirectory()) {
 			// looks for files with no extensions, because sometimes DICOM files
 			// will be improperly named
-			files = search(/^(.*\.dcm|.*\.DCM|.*\.\d+|[^.]+)$/gm, inPath);
+			files = search(/^(.*\.dcm|.*\.dir|.*\.\d+|[^.]+)$/gmi, inPath);
 			setup();
-			if (continuous) {
+			if (opt.c) {
 				cleanEmptyFoldersRecursively(inPath);
 			}
 		} else {
@@ -308,7 +316,7 @@ Please give this file a proper extension or remove it from the input directory.
 		}
 	}
 
-	if (inPath != null && inPath !== undefined) {
+	if (inPath) {
 		start();
 	} else {
 		const express = require('express');
@@ -343,11 +351,32 @@ Please give this file a proper extension or remove it from the input directory.
 		});
 
 		// use local port
-		const port = 10002;
+		const port = ((args[4]) ? args[4] : 10002);
 		const server = app.listen(port, () => {
 			log('server listening on port ' + port);
 			open('http://localhost:' + port + '/');
 		});
 	}
-	//	return newPaths;
+
+	//	failedIndexes.forEach((i, index) => {
+	//		let file = files[i];
+	//		let base = path.parse(file).base;
+	//		if (base.match(/dir/i)) {
+	//			newPaths[i] = path.parse(newPaths[i - 1]).dir + base;
+	//			failedIndexes.splice(index, 1);
+	//			fs.copySync(file, newPaths[i]);
+	//		}
+	//	});
+	if (failedIndexes.length >= 1) {
+		log(chalk.red('failed for files:'));
+		failedIndexes.forEach((i) => {
+			log(chalk.red(files[i]));
+		});
+	}
+
+	return {
+		old: files,
+		new: newPaths,
+		failedIndexes: failedIndexes
+	};
 }

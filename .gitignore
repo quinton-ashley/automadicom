@@ -1,4 +1,3 @@
 .DS_Store
-usr/**
 node_modules/**
 !/node_modules/self-update-on-start/**

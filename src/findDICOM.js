@@ -40,4 +40,5 @@ module.exports = function (inputs, options) {
 			error('input must be a directory');
 		}
 	});
+	return 'success';
 }
