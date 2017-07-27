@@ -77,7 +77,7 @@ module.exports = function (args, opt) {
 	let tags = [];
 	let rules = [];
 	let newPaths = [];
-	let failedIndexes = [];
+	let failed = [];
 	let append;
 	let usr = {
 		rules: fs.readFileSync(rulesPath, 'utf8'),
@@ -282,17 +282,17 @@ Please give this file a proper extension or remove it from the input directory.
 		}
 
 		for (let i = 0; i < files.length; i++) {
-			if ((!fs.statSync(files[i]).isDirectory()) && !files[i].match(/dir/i)) {
+			if ((!fs.statSync(files[i]).isDirectory()) && files[i].match(/^(.*\.dcm|.*\.\d+|[^.]+)$/gmi) && !files[i].match(/dir/i)) {
 				try {
 					edit(files[i], files);
 				} catch (err) {
 					newPaths.push('failed');
-					failedIndexes.push(i);
+					failed.push(i);
 					log(chalk.red(err));
 				}
 			} else {
 				newPaths.push('failed');
-				failedIndexes.push(i);
+				failed.push(i);
 			}
 		}
 	}
@@ -305,7 +305,7 @@ Please give this file a proper extension or remove it from the input directory.
 		if (fs.statSync(inPath).isDirectory()) {
 			// looks for files with no extensions, because sometimes DICOM files
 			// will be improperly named
-			files = search(/^(.*\.dcm|.*\.dir|.*\.\d+|[^.]+)$/gmi, inPath);
+			files = search(/.*/, inPath);
 			setup();
 			if (opt.c) {
 				cleanEmptyFoldersRecursively(inPath);
@@ -358,25 +358,34 @@ Please give this file a proper extension or remove it from the input directory.
 		});
 	}
 
-	//	failedIndexes.forEach((i, index) => {
-	//		let file = files[i];
-	//		let base = path.parse(file).base;
-	//		if (base.match(/dir/i)) {
-	//			newPaths[i] = path.parse(newPaths[i - 1]).dir + base;
-	//			failedIndexes.splice(index, 1);
-	//			fs.copySync(file, newPaths[i]);
-	//		}
-	//	});
-	if (failedIndexes.length >= 1) {
+	for (let index = 0; index < failed.length; index++) {
+		let i = failed[index];
+		let file = files[i];
+		let base = path.parse(file).base;
+		if (base.match(/dir/i)) {
+			let dir;
+			if (i >= 1) {
+				dir = path.parse(newPaths[i - 1]).dir;
+			} else {
+				dir = path.parse(newPaths[i + 1]).dir;
+			}
+			newPaths[i] = dir + '/' + base;
+			log('writing: ' + newPaths[i] + '\n');
+			fs.copySync(file, newPaths[i]);
+			failed.splice(index, 1);
+			index--;
+		}
+	}
+	if (failed.length >= 1) {
 		log(chalk.red('failed for files:'));
-		failedIndexes.forEach((i) => {
+		failed.forEach((i) => {
 			log(chalk.red(files[i]));
 		});
 	}
 
 	return {
-		old: files,
-		new: newPaths,
-		failedIndexes: failedIndexes
+		files: files,
+		newPaths: newPaths,
+		failed: failed
 	};
 }
