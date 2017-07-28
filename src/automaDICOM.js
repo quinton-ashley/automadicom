@@ -3,7 +3,7 @@ const log = console.log;
 const chalk = require('chalk'); // open source terminal text coloring library
 const CSV = require('csv-string'); // open source csv parser and stringifier
 const dwv = require('dwv'); // open source DICOM parser, viewer, and writer
-const fs = require('fs-extra'); // built-in node.js file system library
+const fs = require('fs-extra'); // open source library adds functionality to standard node.js fs
 const open = require('open'); // open source web browser URL opener
 const path = require('path'); // built-in node.js path library
 const process = require('process'); // built-in node.js process library
@@ -381,6 +381,8 @@ Please give this file a proper extension or remove it from the input directory.
 		failed.forEach((i) => {
 			log(chalk.red(files[i]));
 		});
+	} else {
+		log(chalk.green('100% success'));
 	}
 
 	return {
