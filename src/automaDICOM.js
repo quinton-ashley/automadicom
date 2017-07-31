@@ -282,7 +282,7 @@ Please give this file a proper extension or remove it from the input directory.
 		}
 
 		for (let i = 0; i < files.length; i++) {
-			if ((!fs.statSync(files[i]).isDirectory()) && files[i].match(/^(.*\.dcm|.*\.\d+|[^.]+)$/gmi) && !files[i].match(/dir/i)) {
+			if ((!fs.statSync(files[i]).isDirectory()) && files[i].match(/^(.*\.dcm|.*\.\d+|.*(\/|\\)[^.]+)$/gmi) && !files[i].match(/dir/i)) {
 				try {
 					edit(files[i], files);
 				} catch (err) {
