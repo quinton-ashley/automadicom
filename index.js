@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 
-const selfUpdate = require('self-update-on-start');
+module.exports = require('./src/main.js');
 
-selfUpdate(() => {
-	require('./src/main.js')();
-});
+if (require.main == module) {
+	const selfUpdate = require('self-update-on-start');
+
+	selfUpdate(() => {
+		require('./src/main.js')();
+	});
+}

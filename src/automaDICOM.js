@@ -19,8 +19,8 @@ exports.fulfillTagReqs = function (str, elements, tags, values, file) {
 				return elements.getFromName('ViewCodeSequence')['x00080104'].value[0];
 			case 'FrameLaterality':
 				return elements.getFromName('SharedFunctionalGroupsSequence')['x00209071'].value[0]['x00209072'].value[0];
-			case 'ImageName':
-				return path.parse(file).name;
+			case 'Path':
+				return path.parse(file);
 			default:
 		}
 	}
@@ -296,6 +296,36 @@ Please give this file a proper extension or remove it from the input directory.
 				failed.push(i);
 			}
 		}
+		for (let index = 0; index < failed.length; index++) {
+			try {
+				let i = failed[index];
+				let file = files[i];
+				let base = path.parse(file).base;
+				if (base.match(/dir/i)) {
+					let dirs = [];
+					if (i >= 1) {
+						dirs.push(path.parse(newPaths[i - 1]).dir);
+					}
+					if (i < files.length) {
+						dirs.push(path.parse(newPaths[i + 1]).dir);
+					}
+					let newPath = stringSimilarity.findBestMatch(path.parse(file).dir.slice(inPath.length), dirs).bestMatch.target + '/' + base;
+					log('writing: ' + newPath + '\n');
+					fs.copySync(file, newPath);
+					newPaths[i] = newPath;
+					failed.splice(index, 1);
+					index--;
+				}
+			} catch (err) {}
+		}
+		if (failed.length >= 1) {
+			log(chalk.red('failed for files:'));
+			failed.forEach((i) => {
+				log(chalk.red(files[i]));
+			});
+		} else {
+			log(chalk.green('100% success'));
+		}
 	}
 
 	const start = () => {
@@ -357,37 +387,6 @@ Please give this file a proper extension or remove it from the input directory.
 			log('server listening on port ' + port);
 			open('http://localhost:' + port + '/');
 		});
-	}
-
-	for (let index = 0; index < failed.length; index++) {
-		try {
-			let i = failed[index];
-			let file = files[i];
-			let base = path.parse(file).base;
-			if (base.match(/dir/i)) {
-				let dirs = [];
-				if (i >= 1) {
-					dirs.push(path.parse(newPaths[i - 1]).dir);
-				}
-				if (i < files.length) {
-					dirs.push(path.parse(newPaths[i + 1]).dir);
-				}
-				let newPath = stringSimilarity.findBestMatch(path.parse(file).dir.slice(inPath.length), dirs).bestMatch.target + '/' + base;
-				log('writing: ' + newPath + '\n');
-				fs.copySync(file, newPath);
-				newPaths[i] = newPath;
-				failed.splice(index, 1);
-				index--;
-			}
-		} catch {}
-	}
-	if (failed.length >= 1) {
-		log(chalk.red('failed for files:'));
-		failed.forEach((i) => {
-			log(chalk.red(files[i]));
-		});
-	} else {
-		log(chalk.green('100% success'));
 	}
 
 	return {
