@@ -1,62 +1,62 @@
 {
-  "author": "Quinton Ashley",
-  "bin": {
-    "automaDICOM": "./index.js"
-  },
-  "bugs": {
-    "url": "https://github.com/quinton-ashley/automaDICOM/issues"
-  },
-  "contributors": [
-    {
-      "name": "Quinton Ashley",
-      "email": "qashto@gmail.com"
+	"author": "Quinton Ashley",
+	"bin": {
+		"automaDICOM": "./index.js"
+	},
+	"bugs": {
+		"url": "https://github.com/quinton-ashley/automaDICOM/issues"
+	},
+	"contributors": [
+		{
+			"name": "Quinton Ashley",
+			"email": "qashto@gmail.com"
     }
   ],
-  "dependencies": {
-    "body-parser": "^1.17.2",
-    "bootstrap": "^4.0.0-alpha.6",
-    "chalk": "^2.0.1",
-    "connect-form": "^0.2.1",
-    "csv-string": "^2.3.2",
-    "dwv": "^0.19.2",
-    "express": "^4.15.3",
-    "fs-extra": "^4.0.1",
-    "minimist": "^1.2.0",
-    "moment": "^2.18.1",
-    "node-cleanup": "^2.1.2",
-    "open": "0.0.5",
-    "pug": "^2.0.0-rc.3",
-    "recursive-search": "^1.0.1",
-    "string-similarity": "^1.2.0",
-    "tether": "^1.4.0",
-    "update-on-start": "^1.0.1"
-  },
-  "description": "CLI automatic DICOM editor",
-  "directories": {
-    "src": "src"
-  },
-  "entry point": "index.js",
-  "keywords": [
+	"dependencies": {
+		"body-parser": "^1.17.2",
+		"bootstrap": "^4.0.0-alpha.6",
+		"chalk": "^2.0.1",
+		"connect-form": "^0.2.1",
+		"csv-string": "^2.3.2",
+		"dwv": "^0.19.2",
+		"express": "^4.15.3",
+		"fs-extra": "^4.0.1",
+		"minimist": "^1.2.0",
+		"moment": "^2.18.1",
+		"node-cleanup": "^2.1.2",
+		"open": "0.0.5",
+		"pug": "^2.0.0-rc.3",
+		"recursive-search": "^1.0.1",
+		"string-similarity": "^1.2.0",
+		"tether": "^1.4.0",
+		"update-on-start": "^1.0.1"
+	},
+	"description": "CLI automatic DICOM editor",
+	"directories": {
+		"src": "src"
+	},
+	"entry point": "index.js",
+	"keywords": [
     "dicom",
     "batch",
     "metadata editor",
     "dwv"
   ],
-  "license": "MIT",
-  "main": "index.js",
-  "maintainers": [
-    {
-      "name": "Quinton Ashley",
-      "email": "qashto@gmail.com"
+	"license": "MIT",
+	"main": "index.js",
+	"maintainers": [
+		{
+			"name": "Quinton Ashley",
+			"email": "qashto@gmail.com"
     }
   ],
-  "name": "automadicom",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/quinton-ashley/automaDICOM.git"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "version": "0.3.7"
+	"name": "automadicom",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/quinton-ashley/automaDICOM.git"
+	},
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"version": "0.3.8"
 }
