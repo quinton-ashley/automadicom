@@ -379,7 +379,7 @@ Please give this file a proper extension or remove it from the input directory.
 				failed.splice(index, 1);
 				index--;
 			}
-		} catch {}
+		} catch () {}
 	}
 	if (failed.length >= 1) {
 		log(chalk.red('failed for files:'));
