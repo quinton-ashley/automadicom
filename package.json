@@ -28,6 +28,7 @@
 		"pug": "^2.0.0-rc.2",
 		"recursive-search": "^1.0.1",
 		"self-update-on-start": "^1.0.1",
+		"string-similarity": "^1.2.0",
 		"tether": "^1.4.0"
 	},
 	"description": "CLI automatic DICOM editor",
@@ -57,5 +58,5 @@
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
-	"version": "0.3.5"
+	"version": "0.3.6"
 }

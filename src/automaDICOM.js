@@ -9,6 +9,7 @@ const path = require('path'); // built-in node.js path library
 const process = require('process'); // built-in node.js process library
 const search = require('recursive-search').recursiveSearchSync;
 const spawn = require('child_process').spawn;
+const stringSimilarity = require('string-similarity');
 
 exports.fulfillTagReqs = function (str, elements, tags, values, file) {
 
@@ -359,22 +360,26 @@ Please give this file a proper extension or remove it from the input directory.
 	}
 
 	for (let index = 0; index < failed.length; index++) {
-		let i = failed[index];
-		let file = files[i];
-		let base = path.parse(file).base;
-		if (base.match(/dir/i)) {
-			let dir;
-			if (i >= 1) {
-				dir = path.parse(newPaths[i - 1]).dir;
-			} else {
-				dir = path.parse(newPaths[i + 1]).dir;
+		try {
+			let i = failed[index];
+			let file = files[i];
+			let base = path.parse(file).base;
+			if (base.match(/dir/i)) {
+				let dirs = [];
+				if (i >= 1) {
+					dirs.push(path.parse(newPaths[i - 1]).dir);
+				}
+				if (i < files.length) {
+					dirs.push(path.parse(newPaths[i + 1]).dir);
+				}
+				let newPath = stringSimilarity.findBestMatch(path.parse(file).dir.slice(inPath.length), dirs).bestMatch.target + '/' + base;
+				log('writing: ' + newPath + '\n');
+				fs.copySync(file, newPath);
+				newPaths[i] = newPath;
+				failed.splice(index, 1);
+				index--;
 			}
-			newPaths[i] = dir + '/' + base;
-			log('writing: ' + newPaths[i] + '\n');
-			fs.copySync(file, newPaths[i]);
-			failed.splice(index, 1);
-			index--;
-		}
+		} catch {}
 	}
 	if (failed.length >= 1) {
 		log(chalk.red('failed for files:'));
