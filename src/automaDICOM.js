@@ -189,7 +189,7 @@ Please give this file a proper extension or remove it from the input directory.
 			};
 			// rule objects conforms to the format the DICOM writer expects
 			tags.forEach((tag, i) => {
-				values.push(exports.fulfillTagReqs(rules[i], elements, tags, values));
+				values.push(exports.fulfillTagReqs(rules[i], elements, tags, values, file));
 				errorCheck(tag, values[i]);
 				dwvRules[tag] = {
 					action: 'replace',
@@ -212,7 +212,7 @@ Please give this file a proper extension or remove it from the input directory.
 		if (outPath) {
 			dir = outPath;
 			for (i = 0; i < append.length - 1; i++) {
-				dir += '/' + exports.fulfillTagReqs(append[i][0], elements, tags, values);
+				dir += '/' + exports.fulfillTagReqs(append[i][0], elements, tags, values, file);
 			}
 			imgName = exports.fulfillTagReqs(append[append.length - 1][0], elements, tags, values, file);
 			// at the end of this loop it is assured that a unique file name has been created
@@ -248,7 +248,7 @@ Please give this file a proper extension or remove it from the input directory.
 			fs.unlink(file);
 		}
 		if (!opt.o && opt.f) {
-			let mod = [newPath, '-i', 'ImageLaterality=' + exports.fulfillTagReqs("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')", elements, tags, values), '-i', 'InstitutionName=Marin Breast Health'];
+			let mod = [newPath, '-i', 'ImageLaterality=' + exports.fulfillTagReqs("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')", elements, tags, values, file), '-i', 'InstitutionName=Marin Breast Health'];
 			let dcmodify = spawn(__dirname + '/dcmodify', mod);
 
 			dcmodify.stdout.on('data', (data) => {
@@ -293,7 +293,7 @@ Please give this file a proper extension or remove it from the input directory.
 				} catch (err) {
 					newPaths.push('failed');
 					failed.push(i);
-					log(chalk.red(err));
+					log(chalk.red(err.stack));
 				}
 			} else {
 				newPaths.push('failed');
