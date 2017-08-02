@@ -19,16 +19,6 @@ exports.fulfillTagReqs = function (str, elements, tags, values, file) {
 				return elements.getFromName('ViewCodeSequence')['x00080104'].value[0];
 			case 'FrameLaterality':
 				return elements.getFromName('SharedFunctionalGroupsSequence')['x00209071'].value[0]['x00209072'].value[0];
-			case 'FileDir':
-				return path.parse(file).dir;
-			case 'FileRoot':
-				return path.parse(file).root;
-			case 'FileBase':
-				return path.parse(file).base;
-			case 'FileName':
-				return path.parse(file).name;
-			case 'FileExt':
-				return path.parse(file).ext;
 			default:
 		}
 	}
@@ -63,6 +53,7 @@ exports.fulfillTagReqs = function (str, elements, tags, values, file) {
 		// replace the request with the tag itself, the quotes are necessary
 		str = str.replace('$' + tagReq, `\'${reqTag}\'`);
 	}
+	file = path.parse(file);
 	// note that eval is used to evaluate user javascript dynamically!
 	// direct access to String methods gives users advanced control
 	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String
@@ -243,18 +234,20 @@ Please give this file a proper extension or remove it from the input directory.
 			log('writing: ' + newPath + '\n');
 		}
 		// fs-extra makes any new directories if necessary
-		if (!opt.m) {
-			fs.outputFileSync(newPath, Buffer(new Uint8Array(buffer)));
-		} else {
-			fs.copySync(file, newPath);
+		if (!opt.o) {
+			if (!opt.m) {
+				fs.outputFileSync(newPath, Buffer(new Uint8Array(buffer)));
+			} else {
+				fs.copySync(file, newPath);
+			}
 		}
 		newPaths.push(newPath);
 
-		if (opt.c) {
+		if (!opt.o && opt.c) {
 			// if running in opt.c mode (opt.c operation) delete the original file
 			fs.unlink(file);
 		}
-		if (opt.f) {
+		if (!opt.o && opt.f) {
 			let mod = [newPath, '-i', 'ImageLaterality=' + exports.fulfillTagReqs("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')", elements, tags, values), '-i', 'InstitutionName=Marin Breast Health'];
 			let dcmodify = spawn(__dirname + '/dcmodify', mod);
 
@@ -323,7 +316,9 @@ Please give this file a proper extension or remove it from the input directory.
 					}
 					let newPath = stringSimilarity.findBestMatch(path.parse(file).dir.slice(inPath.length), dirs).bestMatch.target + '/' + base;
 					log('writing: ' + newPath + '\n');
-					fs.copySync(file, newPath);
+					if (!opt.o) {
+						fs.copySync(file, newPath);
+					}
 					newPaths[i] = newPath;
 					failed.splice(index, 1);
 					index--;
@@ -350,7 +345,7 @@ Please give this file a proper extension or remove it from the input directory.
 			// will be improperly named
 			files = search(/.*/, inPath);
 			setup();
-			if (opt.c) {
+			if (!opt.o && opt.c) {
 				cleanEmptyFoldersRecursively(inPath);
 			}
 		} else {
