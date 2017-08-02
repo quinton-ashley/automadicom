@@ -227,9 +227,9 @@ Please give this file a proper extension or remove it from the input directory.
 			// at the end of this loop it is assured that a unique file name has been created
 			for (i = 0; newPath == '' || newPaths.includes(newPath) || fs.existsSync(newPath); i++) {
 				if (i >= 1) {
-					newPath = `${dir}/${imgName}_${i.toString() + path.parse(file).ext}`;
+					newPath = `${dir}/${imgName}_${i.toString()}`;
 				} else {
-					newPath = `${dir}/${imgName + path.parse(file).ext}`;
+					newPath = `${dir}/${imgName}`;
 				}
 			}
 		} else {
@@ -277,14 +277,16 @@ Please give this file a proper extension or remove it from the input directory.
 		if (files === undefined || files.length == 0) {
 			error('invalid path, no files found');
 		}
-		let lines = CSV.parse(usr.rules, ';');
-		if (lines.length <= 1) {
-			error('rules files has no rules!');
+		if (!opt.m) {
+			let lines = CSV.parse(usr.rules, ';');
+			if (lines.length <= 1) {
+				error('rules files has no rules!');
+			}
+			lines.forEach((line) => {
+				tags.push(line[0]);
+				rules.push(line[1]);
+			});
 		}
-		lines.forEach((line) => {
-			tags.push(line[0]);
-			rules.push(line[1]);
-		});
 		if (outPath) {
 			append = CSV.parse(usr.append, ';');
 		} else {
