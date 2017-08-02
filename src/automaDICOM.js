@@ -76,11 +76,12 @@ exports.fulfillTagReqs = function (str, elements, tags, values, file) {
 }
 
 module.exports = function (args, opt) {
+	const __parentdir = path.dirname(process.mainModule.filename);
 	// CLI args
 	const inPath = args[0];
 	const outPath = args[1];
-	const rulesPath = ((args[2]) ? args[2] : __dirname + '/../usr/rules.csv');
-	const appendPath = ((args[3]) ? args[3] : __dirname + '/../usr/append.csv');
+	const rulesPath = ((args[2]) ? args[2] : __parentdir + '/usr/rules.csv');
+	const appendPath = ((args[3]) ? args[3] : __parentdir + '/usr/append.csv');
 
 	let files = [];
 	let tags = [];
