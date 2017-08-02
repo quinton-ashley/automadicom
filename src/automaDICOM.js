@@ -19,8 +19,16 @@ exports.fulfillTagReqs = function (str, elements, tags, values, file) {
 				return elements.getFromName('ViewCodeSequence')['x00080104'].value[0];
 			case 'FrameLaterality':
 				return elements.getFromName('SharedFunctionalGroupsSequence')['x00209071'].value[0]['x00209072'].value[0];
-			case 'Path':
-				return path.parse(file);
+			case 'FileDir':
+				return path.parse(file).dir;
+			case 'FileRoot':
+				return path.parse(file).root;
+			case 'FileBase':
+				return path.parse(file).base;
+			case 'FileName':
+				return path.parse(file).name;
+			case 'FileExt':
+				return path.parse(file).ext;
 			default:
 		}
 	}
@@ -302,6 +310,7 @@ Please give this file a proper extension or remove it from the input directory.
 				let file = files[i];
 				let base = path.parse(file).base;
 				if (base.match(/dir/i)) {
+					log('loading: ' + file);
 					let dirs = [];
 					if (i >= 1) {
 						dirs.push(path.parse(newPaths[i - 1]).dir);

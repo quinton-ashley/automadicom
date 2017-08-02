@@ -2,5 +2,5 @@ PatientID; 'Anonymous'
 PatientName; 'Anonymous'
 PatientBirthDate; '19000101'
 StudyDate; $StudyDate
-StudyTime; '131313'
+StudyTime; '000000'
 PatientWeight;0

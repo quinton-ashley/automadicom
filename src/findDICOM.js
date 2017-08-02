@@ -28,7 +28,7 @@ module.exports = function (inputs, options) {
 			log(input);
 			try {
 				let filesString = input;
-				let files = search(/^(.*\.dcm|.*\.DCM|.*\.\d+|[^.]+)$/gm, input);
+				let files = search(/^(.*\.dcm|.*\.\d+|.*(\/|\\)[^.]+)$/gmi, input);
 				files.forEach((file) => {
 					filesString += '\r\n' + file;
 				});
