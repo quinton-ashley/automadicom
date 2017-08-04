@@ -1,0 +1,80 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/usr/local/bin/node',
+1 verbose cli   '/usr/local/bin/npm',
+1 verbose cli   'version',
+1 verbose cli   'patch',
+1 verbose cli   '-f' ]
+2 info using npm@3.10.10
+3 info using node@v6.10.0
+4 warn using --force I sure hope you know what you are doing.
+5 info git [ 'status', '--porcelain' ]
+6 info lifecycle automadicom@0.4.7~preversion: automadicom@0.4.7
+7 silly lifecycle automadicom@0.4.7~preversion: no script for preversion, continuing
+8 verbose version.write data { author: 'Quinton Ashley',
+8 verbose version.write   bin: { automaDICOM: './index.js' },
+8 verbose version.write   bugs: { url: 'https://github.com/quinton-ashley/automaDICOM/issues' },
+8 verbose version.write   contributors: [ { name: 'Quinton Ashley', email: 'qashto@gmail.com' } ],
+8 verbose version.write   dependencies:
+8 verbose version.write    { 'body-parser': '^1.17.2',
+8 verbose version.write      bootstrap: '^4.0.0-alpha.6',
+8 verbose version.write      chalk: '^2.0.1',
+8 verbose version.write      'connect-form': '^0.2.1',
+8 verbose version.write      'csv-string': '^2.3.2',
+8 verbose version.write      dwv: '^0.19.2',
+8 verbose version.write      express: '^4.15.3',
+8 verbose version.write      'fs-extra': '^4.0.1',
+8 verbose version.write      jquery: '^3.2.1',
+8 verbose version.write      minimist: '^1.2.0',
+8 verbose version.write      moment: '^2.18.1',
+8 verbose version.write      'node-cleanup': '^2.1.2',
+8 verbose version.write      open: '0.0.5',
+8 verbose version.write      pug: '^2.0.0-rc.3',
+8 verbose version.write      'recursive-search': '^1.0.1',
+8 verbose version.write      'string-similarity': '^1.2.0',
+8 verbose version.write      tether: '^1.4.0',
+8 verbose version.write      'update-on-start': '^1.0.3' },
+8 verbose version.write   description: 'CLI automatic DICOM editor',
+8 verbose version.write   directories: { src: 'src' },
+8 verbose version.write   'entry point': 'index.js',
+8 verbose version.write   keywords: [ 'dicom', 'batch', 'metadata editor', 'dwv' ],
+8 verbose version.write   license: 'MIT',
+8 verbose version.write   main: 'index.js',
+8 verbose version.write   maintainers: [ { name: 'Quinton Ashley', email: 'qashto@gmail.com' } ],
+8 verbose version.write   name: 'automadicom',
+8 verbose version.write   repository:
+8 verbose version.write    { type: 'git',
+8 verbose version.write      url: 'https://github.com/quinton-ashley/automaDICOM.git' },
+8 verbose version.write   scripts:
+8 verbose version.write    { test: 'echo "Error: no test specified" && exit 1',
+8 verbose version.write      version: 'git add -A',
+8 verbose version.write      postversion: 'git push && git push --tags' },
+8 verbose version.write   version: '0.4.7' } to package.json
+9 info lifecycle automadicom@0.4.7~version: automadicom@0.4.7
+10 verbose lifecycle automadicom@0.4.7~version: unsafe-perm in lifecycle true
+11 verbose lifecycle automadicom@0.4.7~version: PATH: /usr/local/lib/node_modules/npm/bin/node-gyp-bin:/Users/qashto/Documents/web/automaDICOM/node_modules/.bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/opt/X11/bin
+12 verbose lifecycle automadicom@0.4.7~version: CWD: /Users/qashto/Documents/web/automaDICOM
+13 silly lifecycle automadicom@0.4.7~version: Args: [ '-c', 'git add -A' ]
+14 silly lifecycle automadicom@0.4.7~version: Returned: code: 0  signal: null
+15 info git [ 'add',
+15 info git   '/Users/qashto/Documents/web/automaDICOM/package.json' ]
+16 info git [ 'commit', '-m', '0.4.7' ]
+17 info git [ 'tag', 'v0.4.7', '-am', '0.4.7' ]
+18 verbose stack Error: Command failed: git tag v0.4.7 -am 0.4.7
+18 verbose stack fatal: tag 'v0.4.7' already exists
+18 verbose stack
+18 verbose stack     at ChildProcess.exithandler (child_process.js:206:12)
+18 verbose stack     at emitTwo (events.js:106:13)
+18 verbose stack     at ChildProcess.emit (events.js:191:7)
+18 verbose stack     at maybeClose (internal/child_process.js:877:16)
+18 verbose stack     at Process.ChildProcess._handle.onexit (internal/child_process.js:226:5)
+19 verbose cwd /Users/qashto/Documents/web/automaDICOM
+20 error Darwin 16.6.0
+21 error argv "/usr/local/bin/node" "/usr/local/bin/npm" "version" "patch" "-f"
+22 error node v6.10.0
+23 error npm  v3.10.10
+24 error code 128
+25 error Command failed: git tag v0.4.7 -am 0.4.7
+25 error fatal: tag 'v0.4.7' already exists
+26 error If you need help, you may report this error at:
+26 error     <https://github.com/npm/npm/issues>
+27 verbose exit [ 1, true ]
