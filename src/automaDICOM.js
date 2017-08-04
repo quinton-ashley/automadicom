@@ -1,23 +1,23 @@
-const log = console.log;
-
-const chalk = require('chalk'); // open source terminal text coloring library
-const CSV = require('csv-string'); // open source csv parser and stringifier
-const dwv = require('dwv'); // open source DICOM parser, viewer, and writer
-const fs = require('fs-extra'); // open source library adds functionality to standard node.js fs
-const open = require('open'); // open source web browser URL opener
-const path = require('path'); // built-in node.js path library
-const process = require('process'); // built-in node.js process library
-const search = require('recursive-search').recursiveSearchSync;
-const spawn = require('child_process').spawn;
-const stringSimilarity = require('string-similarity');
-
 module.exports = function (args, opt) {
-	const __parentdir = path.dirname(process.mainModule.filename);
+
+	const __parentDir = path.dirname(process.mainModule.filename);
+	const log = console.log;
+
+	const chalk = require('chalk'); // open source terminal text coloring library
+	const CSV = require('csv-string'); // open source csv parser and stringifier
+	const dwv = require('dwv'); // open source DICOM parser, viewer, and writer
+	const fs = require('fs-extra'); // open source library adds functionality to standard node.js fs
+	const open = require('open'); // open source web browser URL opener
+	const path = require('path'); // built-in node.js path library
+	const process = require('process'); // built-in node.js process library
+	const search = require('recursive-search').recursiveSearchSync;
+	const spawn = require('child_process').spawn;
+	const stringSimilarity = require('string-similarity');
 	// CLI args
 	const inPath = args[0];
 	const outPath = args[1];
-	const rulesPath = ((args[2]) ? args[2] : __parentdir + '/usr/rules.csv');
-	const appendPath = ((args[3]) ? args[3] : __parentdir + '/usr/append.csv');
+	const rulesPath = ((args[2]) ? args[2] : __parentDir + '/usr/rules.csv');
+	const appendPath = ((args[3]) ? args[3] : __parentDir + '/usr/append.csv');
 
 	let files = [];
 	let tags = [];
@@ -371,8 +371,13 @@ Please give this file a proper extension or remove it from the input directory.
 		var app = express();
 		// the static function allows us to retreive the content in the specified directory
 		app.use('/img', express.static(__dirname + '/../img'));
+		app.use('/bootstrap', express.static(__parentDir + '/node_modules/bootstrap'));
+		app.use('/jquery', express.static(__parentDir + '/node_modules/jquery'));
+		app.use('/moment', express.static(__parentDir + '/node_modules/moment'));
+		app.use('/tether', express.static(__parentDir + '/node_modules/tether'));
 		// sets the views folder as the main folder
 		app.set('views', __dirname + '/../views');
+		app.use(express.static(__dirname + '/../views'));
 		// sets up pug as the view engine, pug is rendered to html dynamically, like php but better
 		app.set('view engine', 'pug');
 
