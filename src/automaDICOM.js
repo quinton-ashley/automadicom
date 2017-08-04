@@ -11,61 +11,6 @@ const search = require('recursive-search').recursiveSearchSync;
 const spawn = require('child_process').spawn;
 const stringSimilarity = require('string-similarity');
 
-exports.fulfillTagReqs = function (str, elements, tags, values, file) {
-
-	const getSubLevelTag = (tagReq) => {
-		switch (tagReq) {
-			case 'CodeMeaning':
-				return elements.getFromName('ViewCodeSequence')['x00080104'].value[0];
-			case 'FrameLaterality':
-				return elements.getFromName('SharedFunctionalGroupsSequence')['x00209071'].value[0]['x00209072'].value[0];
-			default:
-		}
-	}
-
-	let match, reqTag, tagReq;
-	let useOgVal = false;
-	let editIdx = -1;
-	let regex = /\$[\w|\-|_]*/i;
-	// loops while a match is found
-	while (match = regex.exec(str)) {
-		useOgVal = (match[0][1] == '$');
-		tagReq = match[0].slice(((useOgVal) ? 2 : 1), match[0].length);
-		// if the original value of the tag is requested
-		// or if the tag requested is not found in tags
-		// or if the tag requested is found in tags but does not yet have a value
-		if (useOgVal || (editIdx = tags.indexOf(tagReq)) <= -1 || editIdx >= values.length) {
-			// get the tag from the zero level DICOM by name
-			reqTag = elements.getFromName(tagReq);
-			if (reqTag == null) {
-				reqTag = getSubLevelTag(tagReq);
-			}
-			// if it's still null it wasn't found
-			if (reqTag == null) {
-				log('Error: ' + tagReq + ' tag not found!!');
-				reqTag = 'null';
-			}
-			reqTag = reqTag.replace('\u0000', '');
-		} else {
-			// get the tag from the values array
-			reqTag = values[editIdx];
-		}
-		// replace the request with the tag itself, the quotes are necessary
-		str = str.replace('$' + tagReq, `\'${reqTag}\'`);
-	}
-	file = path.parse(file);
-	// note that eval is used to evaluate user javascript dynamically!
-	// direct access to String methods gives users advanced control
-	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String
-	try {
-		str = eval(str);
-	} catch (err) {
-		log(chalk.red('eval failed for request: ' + str));
-		throw err;
-	}
-	return str;
-}
-
 module.exports = function (args, opt) {
 	const __parentdir = path.dirname(process.mainModule.filename);
 	// CLI args
@@ -88,6 +33,62 @@ module.exports = function (args, opt) {
 	const error = (err) => {
 		log(chalk.red('Error: ' + err));
 		process.exit(1);
+	}
+
+	var a;
+	exports.fulfillTagReqs = function (str, elements, tags, values, file) {
+
+		const getSubLevelTag = (tagReq) => {
+			switch (tagReq) {
+				case 'CodeMeaning':
+					return elements.getFromName('ViewCodeSequence')['x00080104'].value[0];
+				case 'FrameLaterality':
+					return elements.getFromName('SharedFunctionalGroupsSequence')['x00209071'].value[0]['x00209072'].value[0];
+				default:
+			}
+		}
+
+		let match, reqTag, tagReq;
+		let useOgVal = false;
+		let editIdx = -1;
+		let regex = /\$[\w|\-|_]*/i;
+		// loops while a match is found
+		while (match = regex.exec(str)) {
+			useOgVal = (match[0][1] == '$');
+			tagReq = match[0].slice(((useOgVal) ? 2 : 1), match[0].length);
+			// if the original value of the tag is requested
+			// or if the tag requested is not found in tags
+			// or if the tag requested is found in tags but does not yet have a value
+			if (useOgVal || (editIdx = tags.indexOf(tagReq)) <= -1 || editIdx >= values.length) {
+				// get the tag from the zero level DICOM by name
+				reqTag = elements.getFromName(tagReq);
+				if (reqTag == null) {
+					reqTag = getSubLevelTag(tagReq);
+				}
+				// if it's still null it wasn't found
+				if (reqTag == null) {
+					log('Error: ' + tagReq + ' tag not found!!');
+					reqTag = 'null';
+				}
+				reqTag = reqTag.replace('\u0000', '');
+			} else {
+				// get the tag from the values array
+				reqTag = values[editIdx];
+			}
+			// replace the request with the tag itself, the quotes are necessary
+			str = str.replace('$' + tagReq, `\'${reqTag}\'`);
+		}
+		file = path.parse(file);
+		// note that eval is used to evaluate user javascript dynamically!
+		// direct access to String methods gives users advanced control
+		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String
+		try {
+			str = eval(str);
+		} catch (err) {
+			log(chalk.red('eval failed for request: ' + str));
+			throw err;
+		}
+		return str;
 	}
 
 	const cleanEmptyFoldersRecursively = (folder) => {
@@ -291,12 +292,12 @@ Please give this file a proper extension or remove it from the input directory.
 				try {
 					edit(files[i], files);
 				} catch (err) {
-					newPaths.push('failed');
+					newPaths.push('');
 					failed.push(i);
 					log(chalk.red(err.stack));
 				}
 			} else {
-				newPaths.push('failed');
+				newPaths.push('');
 				failed.push(i);
 			}
 		}
@@ -308,12 +309,17 @@ Please give this file a proper extension or remove it from the input directory.
 				if (base.match(/dir/i)) {
 					log('loading: ' + file);
 					let dirs = [];
-					if (i >= 1) {
-						dirs.push(path.parse(newPaths[i - 1]).dir);
+					let j, tmp;
+					for (j = 1; !tmp && i >= j; j++) {
+						tmp = path.parse(newPaths[i - j]).dir;
 					}
-					if (i < files.length) {
-						dirs.push(path.parse(newPaths[i + 1]).dir);
+					dirs.push(tmp);
+					tmp = '';
+					for (j = 1; !tmp && i < files.length - j; j++) {
+						tmp = path.parse(newPaths[i + j]).dir;
 					}
+					dirs.push(tmp);
+					log(dirs);
 					let newPath = stringSimilarity.findBestMatch(path.parse(file).dir.slice(inPath.length), dirs).bestMatch.target + '/' + base;
 					log('writing: ' + newPath + '\n');
 					if (!opt.o) {
@@ -323,7 +329,9 @@ Please give this file a proper extension or remove it from the input directory.
 					failed.splice(index, 1);
 					index--;
 				}
-			} catch (err) {}
+			} catch (err) {
+				log(chalk.red(err.stack));
+			}
 		}
 		if (failed.length >= 1) {
 			log(chalk.red('failed for files:'));
