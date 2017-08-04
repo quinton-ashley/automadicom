@@ -366,17 +366,9 @@ Please give this file a proper extension or remove it from the input directory.
 		start();
 	} else {
 		const express = require('express');
-		const bodyParser = require('body-parser');
-		const form = require('connect-form');
 
 		// express is used to serve pages
-		var app = module.exports = express(form({
-			keepExtensions: true,
-			uploadDir: './uploads'
-		}));
-		app.use(bodyParser.urlencoded({
-			extended: false
-		}));
+		var app = express();
 		// the static function allows us to retreive the content in the specified directory
 		app.use('/img', express.static(__dirname + '/../img'));
 		// sets the views folder as the main folder
