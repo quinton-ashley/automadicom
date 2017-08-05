@@ -1,8 +1,4 @@
 module.exports = function (args, opt) {
-
-	const __parentDir = path.dirname(process.mainModule.filename);
-	const log = console.log;
-
 	const chalk = require('chalk'); // open source terminal text coloring library
 	const CSV = require('csv-string'); // open source csv parser and stringifier
 	const dwv = require('dwv'); // open source DICOM parser, viewer, and writer
@@ -13,6 +9,9 @@ module.exports = function (args, opt) {
 	const search = require('recursive-search').recursiveSearchSync;
 	const spawn = require('child_process').spawn;
 	const stringSimilarity = require('string-similarity');
+
+	const __parentDir = path.dirname(process.mainModule.filename);
+	const log = console.log;
 	// CLI args
 	const inPath = args[0];
 	const outPath = args[1];
