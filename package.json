@@ -22,6 +22,7 @@
     "express": "^4.15.3",
     "fs-extra": "^4.0.1",
     "jquery": "^3.2.1",
+    "markdown-it": "^8.3.2",
     "minimist": "^1.2.0",
     "moment": "^2.18.1",
     "node-cleanup": "^2.1.2",
@@ -60,7 +61,7 @@
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "version": "git add -A",
-    "postversion": "git push && git push --tags"
+    "postversion": "git push && git push --tags && npm publish"
   },
-  "version": "0.4.10"
+  "version": "0.4.11"
 }

@@ -10,11 +10,11 @@ module.exports = function (args, opt) {
 	const spawn = require('child_process').spawn;
 	const stringSimilarity = require('string-similarity');
 
-	const __parentDir = path.dirname(process.mainModule.filename);
+	const __parentDir = path.parse(process.mainModule.filename).dir;
 	const log = console.log;
 	// CLI args
-	const inPath = args[0];
-	const outPath = args[1];
+	let inPath = ((args[0] && args[0].toString().match(/\D+/)) ? args[0] : '');
+	let outPath = args[1];
 	const rulesPath = ((args[2]) ? args[2] : __parentDir + '/usr/rules.csv');
 	const appendPath = ((args[3]) ? args[3] : __parentDir + '/usr/append.csv');
 
@@ -25,6 +25,8 @@ module.exports = function (args, opt) {
 	let failed = [];
 	let append;
 	let usr = {
+		inPath: inPath,
+		outPath: outPath,
 		rules: fs.readFileSync(rulesPath, 'utf8'),
 		append: fs.readFileSync(appendPath, 'utf8')
 	}
@@ -364,10 +366,17 @@ Please give this file a proper extension or remove it from the input directory.
 	if (inPath) {
 		start();
 	} else {
+		const bodyParser = require('body-parser');
 		const express = require('express');
+		const md = require('markdown-it')();
 
 		// express is used to serve pages
 		var app = express();
+		// use body parser to easy fetch post body
+		app.use(bodyParser.urlencoded({
+			extended: true
+		}));
+		app.use(bodyParser.json());
 		// the static function allows us to retreive the content in the specified directory
 		app.use('/img', express.static(__dirname + '/../img'));
 		app.use('/bootstrap', express.static(__parentDir + '/node_modules/bootstrap'));
@@ -376,24 +385,58 @@ Please give this file a proper extension or remove it from the input directory.
 		app.use('/tether', express.static(__parentDir + '/node_modules/tether'));
 		// sets the views folder as the main folder
 		app.set('views', __dirname + '/../views');
-		app.use(express.static(__dirname + '/../views'));
-		// sets up pug as the view engine, pug is rendered to html dynamically, like php but better
+		//		app.use(express.static(__dirname + '/../views'));
+		// sets up pug as the view engine
+		// pug is template framework for rendering html dynamically, like php but way better
 		app.set('view engine', 'pug');
 
 		// when the user requests the landing page, render it with pug
 		app.get('/', (req, res) => {
+			usr.inPath = __parentDir + '/usr/input';
+			usr.outPath = __parentDir + '/usr/output';
 			res.render('index', {
 				title: 'automaDICOM - ' + new Date().toString(),
 				usr: usr
 			});
 		});
 
+		app.get('/tutorial', (req, res) => {
+			let mark = __dirname + '/README.md';
+			let file = fs.readFile(mark, 'utf8', (err, data) => {
+				if (err) {
+					log(err);
+				}
+				res.render('index', {
+					title: 'automaDICOM Tutorial',
+					message: md.render(data.toString())
+				});
+			});
+		});
+
+
 		app.post('/submit', function (req, res) {
-			res.send(req.body);
+			res.writeHead(200, {
+				'Content-Type': 'text/html'
+			});
+			res.end('Starting... view your results in the terminal window <br>' + JSON.stringify(req.body));
+			opt.m = ((req.body.m) ? true : false);
+			opt.s = ((req.body.s) ? true : false);
+			opt.o = ((req.body.o) ? true : false);
+			inPath = req.body.inPath;
+			outPath = req.body.outPath;
+			fs.writeFileSync(rulesPath, req.body.rules);
+			fs.writeFileSync(appendPath, req.body.append);
+			usr = {
+				inPath: inPath,
+				outPath: outPath,
+				rules: req.body.rules,
+				append: req.body.append
+			};
+			start();
 		});
 
 		// use local port
-		const port = ((args[4]) ? args[4] : 10002);
+		const port = ((args[0]) ? args[0] : 10002);
 		const server = app.listen(port, () => {
 			log('server listening on port ' + port);
 			open('http://localhost:' + port + '/');
@@ -401,6 +444,7 @@ Please give this file a proper extension or remove it from the input directory.
 	}
 
 	return {
+		usr: usr,
 		files: files,
 		newPaths: newPaths,
 		failed: failed
