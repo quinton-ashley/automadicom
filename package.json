@@ -14,12 +14,11 @@
   ],
   "dependencies": {
     "body-parser": "^1.17.2",
-    "bootstrap": "^4.0.0-alpha.6",
-    "chalk": "^2.0.1",
-    "connect-form": "^0.2.1",
+    "bootstrap": "^4.0.0-beta",
+    "chalk": "^2.1.0",
     "csv-string": "^2.3.2",
     "dwv": "^0.19.2",
-    "express": "^4.15.3",
+    "express": "^4.15.4",
     "fs-extra": "^4.0.1",
     "jquery": "^3.2.1",
     "markdown-it": "^8.3.2",
@@ -29,6 +28,7 @@
     "open": "0.0.5",
     "pug": "^2.0.0-rc.3",
     "recursive-search": "^1.0.1",
+    "server-destroy": "^1.0.1",
     "string-similarity": "^1.2.0",
     "tether": "^1.4.0"
   },
@@ -63,5 +63,5 @@
     "version": "git add -A",
     "postversion": "git push && git push --tags && npm publish"
   },
-  "version": "0.4.11"
+  "version": "0.4.12"
 }

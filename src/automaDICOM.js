@@ -6,10 +6,12 @@ module.exports = function (args, opt) {
 	const open = require('open'); // open source web browser URL opener
 	const path = require('path'); // built-in node.js path library
 	const process = require('process'); // built-in node.js process library
-	const search = require('recursive-search').recursiveSearchSync;
-	const spawn = require('child_process').spawn;
-	const stringSimilarity = require('string-similarity');
+	const search = require('recursive-search').recursiveSearchSync; // open source recursive fs search
+	const spawn = require('child_process').spawn; // built-in node.js child process spawn function
+	const stringSimilarity = require('string-similarity'); // open source string similarity algorithm
 
+	// if automaDICOM is being run as a module, this will get the parent directory
+	// else it will just get the value of __dirname
 	const __parentDir = path.parse(process.mainModule.filename).dir;
 	const log = console.log;
 	// CLI args
@@ -367,18 +369,19 @@ Please give this file a proper extension or remove it from the input directory.
 		start();
 	} else {
 		const bodyParser = require('body-parser');
+		const enableDestroy = require('server-destroy');
 		const express = require('express');
 		const md = require('markdown-it')();
 
 		// express is used to serve pages
-		var app = express();
+		let app = express();
+		let server;
 		// use body parser to easy fetch post body
 		app.use(bodyParser.urlencoded({
 			extended: true
 		}));
 		app.use(bodyParser.json());
 		// the static function allows us to retreive the content in the specified directory
-		app.use('/img', express.static(__dirname + '/../img'));
 		app.use('/bootstrap', express.static(__parentDir + '/node_modules/bootstrap'));
 		app.use('/jquery', express.static(__parentDir + '/node_modules/jquery'));
 		app.use('/moment', express.static(__parentDir + '/node_modules/moment'));
@@ -433,14 +436,21 @@ Please give this file a proper extension or remove it from the input directory.
 				append: req.body.append
 			};
 			start();
+			log('hello');
+			server.destroy(() => {
+				log('closing server');
+			});
 		});
+
+		server = require('http').createServer(app);
 
 		// use local port
 		const port = ((args[0]) ? args[0] : 10002);
-		const server = app.listen(port, () => {
+		server.listen(port, () => {
 			log('server listening on port ' + port);
 			open('http://localhost:' + port + '/');
 		});
+		enableDestroy(server);
 	}
 
 	return {
