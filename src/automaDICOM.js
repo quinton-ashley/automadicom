@@ -26,11 +26,13 @@ module.exports = function (args, opt) {
 	let newPaths = [];
 	let failed = [];
 	let append;
+	let version = require('../package.json').version;
 	let usr = {
 		inPath: inPath,
 		outPath: outPath,
 		rules: fs.readFileSync(rulesPath, 'utf8'),
-		append: fs.readFileSync(appendPath, 'utf8')
+		append: fs.readFileSync(appendPath, 'utf8'),
+		version: version
 	}
 
 	var a;
@@ -403,12 +405,12 @@ Please give this file a proper extension or remove it from the input directory.
 		});
 
 		app.get('/tutorial', (req, res) => {
-			let mark = __dirname + '/README.md';
+			let mark = __dirname + '/../README.md';
 			let file = fs.readFile(mark, 'utf8', (err, data) => {
 				if (err) {
 					error(err);
 				}
-				res.render('index', {
+				res.render('tutorial', {
 					title: 'automaDICOM Tutorial',
 					message: md.render(data.toString())
 				});
@@ -432,7 +434,8 @@ Please give this file a proper extension or remove it from the input directory.
 				inPath: inPath,
 				outPath: outPath,
 				rules: req.body.rules,
-				append: req.body.append
+				append: req.body.append,
+				version: version
 			};
 			if (!/^win/.test(process.platform)) {
 				const focusOnTerminal = spawn('open', ['-a', 'Terminal'], {

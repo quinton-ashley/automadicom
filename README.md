@@ -3,14 +3,19 @@ Automatic DICOM tag value editor that uses dynamically evaluated rules to modify
 ## Requirements
 1. [Node.js and npm](https://nodejs.org)
 2. [Chrome](https://www.google.com/chrome/browser/desktop/index.html)
-3. (highly reccomended) [git](https://git-scm.com/downloads) for Git Bash
-## Installation
-1. To install automaDICOM you can use git or go to the [GitHub page](https://github.com/quinton-ashley/automaDICOM) and download and extract the ZIP file.  I highly recommend installing both [git](https://git-scm.com/downloads) and the [GitHub Desktop app](https://desktop.github.com/).  This will make updating automaDICOM easy!  You can use all the default install settings.
-2. Run the GitHub Desktop app.  You do not need to have a GitHub account or login to use this app, just skip those steps in the setup.  Click on "File" then "Clone Repository" in the toolbar, enter `quinton-ashley/automaDICOM`, and click the "Clone" button.  Look for automaDICOM in the GitHub folder of your Documents folder to verify the installation.  Anytime there is an update you can just open up the GitHub Desktop app and press the "Sync" button on macOS or press "Fetch origin" then "Pull" on Windows.  You'd have to download and extract a ZIP folder from the GitHub page every time you wanted to update if you weren't using git!
-3. Node.js and npm are required to run automaDICOM.  Node.js is a JavaScript runtime built on Chrome's V8 JavaScript engine.  Node.js' package ecosystem, npm, is the largest ecosystem of open source libraries in the world!  The backbone of this project is the incredible npm package, [DWV](https://github.com/ivmartel/dwv).  Install the LTS version of [Node.js and npm](https://nodejs.org).
-4. Windows users must use "Developer Mode" to run automaDICOM.  Type "developer" into the Cortana search bar (right next to the Windows icon in the bottom left in Windows 10) and click on the "For developers settings".  Once the Settings window comes up check the "Developer Mode" option and restart your computer.
-5. You must have read/write permission for both the input and output directories given as arguments to automaDICOM.
+3. [git](https://git-scm.com/downloads)
+4. Windows users must enable Developer Mode
+## Installation Details
+1. Node.js and npm are required to run automaDICOM.  Node.js is a JavaScript runtime built on Chrome's V8 JavaScript engine.  Node.js' package ecosystem, npm, is the largest ecosystem of open source libraries in the world!  The backbone of this project is the incredible npm package, [DWV](https://github.com/ivmartel/dwv).  Install the LTS version of [Node.js and npm](https://nodejs.org) and use all the default settings.
+2. Node.js requires Chrome.
+3. git will be used to automatically update automaDICOM.
+4. Windows users must use "Developer Mode" to run automaDICOM.  Type "developer" into the Cortana search bar (right next to the Windows icon in the bottom left in Windows 10) and click on the "For developers settings".  Once the Settings window comes up check the "Developer Mode" option and restart your computer. 
   
+## Running automaDICOM (Web UI)
+### macOS
+Download the [user friendly automaDICOM app for macOS](https://github.com/quinton-ashley/automaDICOM_macOS) and put it in your `/Applications` folder (it won't work outside the Applications folder).
+### Windows
+On the [automaDICOM GitHub page](https://github.com/quinton-ashley/automaDICOM) click the green "Clone or Download" button to download in a ZIP file or use git clone if you're familiar with git.  Extract the ZIP file or clone automaDICOM into your Documents folder, or any other folder that doesn't require Admin privledges to read/write (for example don't put it in Program Files).  Run automaDICOM by double clicking on the `automaDICOM_Windows.bat` file.  You can drag the shortcut `.lnk` file to your Desktop for convience, don't move the `.bat` file itself though.
 ## Input File/Directory Format
 The first command line argument to automaDICOM can be either a single image or directory with images or subdirectories that contain images.  This program does not edit any contents of the input file(s) but will add the `.dcm` extension to the file name if the improperly named DICOM file(s) doesn't(don't) have it.
 ## Rules CSV Format
@@ -70,7 +75,7 @@ $PatientID
 $Modality
 $SeriesDescription
 ```
-## Running the Script
+## Running automaDICOM as a CLI
 The command line programs Git Bash, Terminal, and PowerShell are able to write the path names for you if you drag and drop a file or folder onto their window.  This will save you a lot of time!  
 In the example below the `cd` command means change directory.  Using `sudo` will ask you for your password.  Your permission is needed to install automaDICOM as a global CLI.  After installing you can now use the `automaDICOM` command to run the script.  
 If you are on Windows open up Git Bash and use this format:
