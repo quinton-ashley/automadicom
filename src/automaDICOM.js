@@ -417,7 +417,10 @@ Please give this file a proper extension or remove it from the input directory.
 
 
 		app.post('/submit', function (req, res) {
-			res.render('closeTab', {});
+			res.writeHead(200, {
+				'Content-Type': 'text/html'
+			});
+			res.end('<br><br><br>Starting... view your results in the terminal window<br><br><br>' + JSON.stringify(req.body));
 			opt.m = ((req.body.m) ? true : false);
 			opt.s = ((req.body.s) ? true : false);
 			opt.o = ((req.body.o) ? true : false);
