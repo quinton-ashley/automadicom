@@ -33,11 +33,6 @@ module.exports = function (args, opt) {
 		append: fs.readFileSync(appendPath, 'utf8')
 	}
 
-	const error = (err) => {
-		log(chalk.red('Error: ' + err));
-		process.exit(1);
-	}
-
 	var a;
 	exports.fulfillTagReqs = function (str, elements, tags, values, file) {
 
@@ -94,6 +89,10 @@ module.exports = function (args, opt) {
 		return str;
 	}
 
+	const error = (err) => {
+		log(chalk.red(err.stack));
+	}
+
 	const cleanEmptyFoldersRecursively = (folder) => {
 		if (!fs.statSync(folder).isDirectory()) {
 			return 1;
@@ -125,7 +124,7 @@ module.exports = function (args, opt) {
 			case 'PatientBirthDate':
 			case 'StudyDate':
 				if (typeof value !== 'string') {
-					error(`${tag} ${value}
+					throw new Error(`${tag} ${value}
 Dates must be entered as a String in a standard format, ex:'YYYYMMDD'
 					`);
 				}
@@ -144,7 +143,7 @@ Dates must be entered as a String in a standard format, ex:'YYYYMMDD'
 			case 'PatientBirthTime':
 			case 'StudyTime':
 				if (typeof value !== 'string') {
-					error(`${tag} ${value}
+					throw new Error(`${tag} ${value}
 Times must be entered as a String in a standard format, ex:'HHMMSS'
 					`);
 				}
@@ -168,11 +167,11 @@ Times must be entered as a String in a standard format, ex:'HHMMSS'
 			// parse the array buffer of the file
 			parser.parse(new Uint8Array(fs.readFileSync(file)).buffer);
 		} catch (err) {
-			throw `
+			throw new Error(`
 Error: failed to load ${file}
 This file does not have an extension and is not a DICOM image.
 Please give this file a proper extension or remove it from the input directory.
-			`;
+			`);
 		}
 		// get the tags
 		let elements = parser.getDicomElements();
@@ -253,14 +252,8 @@ Please give this file a proper extension or remove it from the input directory.
 		}
 		if (!opt.o && opt.f) {
 			let mod = [newPath, '-i', 'ImageLaterality=' + exports.fulfillTagReqs("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')", elements, tags, values, file), '-i', 'InstitutionName=Marin Breast Health'];
-			let dcmodify = spawn(__dirname + '/dcmodify', mod);
-
-			dcmodify.stdout.on('data', (data) => {
-				log(`stdout: ${data}`);
-			});
-
-			dcmodify.stderr.on('data', (data) => {
-				log(`stderr: ${data}`);
+			let dcmodify = spawn(__dirname + '/dcmodify', mod, {
+				stdio: 'inherit'
 			});
 
 			dcmodify.on('close', (code) => {
@@ -272,12 +265,14 @@ Please give this file a proper extension or remove it from the input directory.
 
 	const setup = () => {
 		if (files === undefined || files.length == 0) {
-			error('invalid path, no files found');
+			error(new Error('invalid path, no files found'));
+			return;
 		}
 		if (!opt.m) {
 			let lines = CSV.parse(usr.rules, ';');
 			if (lines.length <= 1) {
-				error('rules files has no rules!');
+				error(new Error('rules files has no rules!'));
+				return;
 			}
 			lines.forEach((line) => {
 				tags.push(line[0]);
@@ -297,7 +292,7 @@ Please give this file a proper extension or remove it from the input directory.
 				} catch (err) {
 					newPaths.push('');
 					failed.push(i);
-					log(chalk.red(err.stack));
+					error(err);
 				}
 			} else {
 				newPaths.push('');
@@ -333,7 +328,7 @@ Please give this file a proper extension or remove it from the input directory.
 					index--;
 				}
 			} catch (err) {
-				log(chalk.red(err.stack));
+				error(err);
 			}
 		}
 		if (failed.length >= 1) {
@@ -349,19 +344,23 @@ Please give this file a proper extension or remove it from the input directory.
 	const start = () => {
 		log('');
 		log('input: ' + inPath + '\n');
-		// if the input path is a directory send it straight to the setup function
-		// else glob for leaves of the fs
-		if (fs.statSync(inPath).isDirectory()) {
-			// looks for files with no extensions, because sometimes DICOM files
-			// will be improperly named
-			files = search(/.*/, inPath);
-			setup();
-			if (!opt.o && opt.c) {
-				cleanEmptyFoldersRecursively(inPath);
+		if (fs.existsSync(inPath)) {
+			// if the input path is a directory send it straight to the setup function
+			// else glob for leaves of the fs
+			if (fs.statSync(inPath).isDirectory()) {
+				// looks for files with no extensions, because sometimes DICOM files
+				// will be improperly named
+				files = search(/.*/, inPath);
+				setup();
+				if (!opt.o && opt.c) {
+					cleanEmptyFoldersRecursively(inPath);
+				}
+			} else {
+				files = [inPath];
+				setup();
 			}
 		} else {
-			files = [inPath];
-			setup();
+			error(new Error('Input path does not exist!'));
 		}
 	}
 
@@ -407,7 +406,7 @@ Please give this file a proper extension or remove it from the input directory.
 			let mark = __dirname + '/README.md';
 			let file = fs.readFile(mark, 'utf8', (err, data) => {
 				if (err) {
-					log(err);
+					error(err);
 				}
 				res.render('index', {
 					title: 'automaDICOM Tutorial',
@@ -418,10 +417,7 @@ Please give this file a proper extension or remove it from the input directory.
 
 
 		app.post('/submit', function (req, res) {
-			res.writeHead(200, {
-				'Content-Type': 'text/html'
-			});
-			res.end('Starting... view your results in the terminal window <br>' + JSON.stringify(req.body));
+			res.render('closeTab', {});
 			opt.m = ((req.body.m) ? true : false);
 			opt.s = ((req.body.s) ? true : false);
 			opt.o = ((req.body.o) ? true : false);
@@ -435,11 +431,19 @@ Please give this file a proper extension or remove it from the input directory.
 				rules: req.body.rules,
 				append: req.body.append
 			};
-			start();
-			log('hello');
-			server.destroy(() => {
-				log('closing server');
-			});
+			if (!/^win/.test(process.platform)) {
+				const focusOnTerminal = spawn('open', ['-a', 'Terminal'], {
+					cwd: __parentDir,
+					stdio: 'inherit'
+				});
+
+				focusOnTerminal.on('close', (code) => {
+					start();
+					server.destroy(() => {
+						log('closing server');
+					});
+				});
+			}
 		});
 
 		server = require('http').createServer(app);
