@@ -373,12 +373,14 @@ Please give this file a proper extension or remove it from the input directory.
 	}
 
 	const end = () => {
-		cb([{
-			usr: usr,
-			files: files,
-			newPaths: newPaths,
-			failed: failed
+		if (cb) {
+			cb([{
+				usr: usr,
+				files: files,
+				newPaths: newPaths,
+				failed: failed
 	}], opt);
+		}
 	}
 
 	const webStart = () => {
