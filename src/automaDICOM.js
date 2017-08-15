@@ -392,6 +392,13 @@ Please give this file a proper extension or remove it from the input directory.
 		// express is used to serve pages
 		let app = express();
 		let server;
+		const gracefulWebExit = () => {
+			log("\nGracefully shutting down from SIGINT (Ctrl-C)");
+			server.destroy(() => {
+				log('closing server');
+				process.exit();
+			});
+		}
 		// use body parser to easy fetch post body
 		app.use(bodyParser.urlencoded({
 			extended: true
@@ -403,6 +410,7 @@ Please give this file a proper extension or remove it from the input directory.
 		app.use('/moment', express.static(__parentDir + '/node_modules/moment'));
 		app.use('/tether', express.static(__parentDir + '/node_modules/tether'));
 		// sets the views folder as the main folder
+		app.use('/', express.static(__dirname + '/../views'));
 		app.set('views', __dirname + '/../views');
 		//		app.use(express.static(__dirname + '/../views'));
 		// sets up pug as the view engine
@@ -432,8 +440,12 @@ Please give this file a proper extension or remove it from the input directory.
 			});
 		});
 
+		app.get('/exit', (req, res) => {
+			gracefulWebExit();
+		})
 
-		app.post('/submit', function (req, res) {
+
+		app.post('/submit', (req, res) => {
 			res.writeHead(200, {
 				'Content-Type': 'text/html'
 			});
@@ -483,7 +495,11 @@ Please give this file a proper extension or remove it from the input directory.
 			open('http://localhost:' + port + '/');
 		});
 		enableDestroy(server);
+		process.on('SIGINT', () => {
+			gracefulWebExit();
+		});
 	}
+
 
 	if (inPath) {
 		start();

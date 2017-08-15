@@ -8,10 +8,14 @@ link(rel='stylesheet' type='text/css' href='style.css')
 title= title
 
 body
-div.container.col-12.col-sm-12.col-md-12.col-lg-12.col-xl-10.justify-content-center
-	div.row.pt-3.px-1
-		div.col: p automaDICOM #{usr.version} 
-		div.col.d-flex.justify-content-end: a(href='/tutorial') current tutorial
+nav.navbar.sticky-top.d-flex.justify-content-center
+	ul.nav.d-flex.justify-content-center
+		li.nav-item: a.nav-link.qt.m-0.p-0(href='#') automaDICOM
+			small.col-12.m-0.p-0.d-flex.justify-content-center #{usr.version} 
+		li.nav-item: a.nav-link.qt(href='/tutorial') Tutorial
+		li.nav-item: a.nav-link.qt(href='/supportedTagsList.txt') Editable Tags
+		li.nav-item: a.nav-link.qt(href='/exit') Exit
+div.container.col-12.col-sm-12.col-md-12.col-lg-12.col-xl-10.justify-content-center.mb-2
 	div.row: div.col
 		form.form-inline.qt.rounded.mb-0(action='/submit' role='form' method='POST'): div.container.col-12: div.form-group.row
 			div.input-group.input-group-sm.col-12.m-0.p-1
