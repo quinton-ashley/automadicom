@@ -1,4 +1,4 @@
-module.exports = function (args, opt) {
+module.exports = function (args, opt, cb) {
 	const chalk = require('chalk'); // open source terminal text coloring library
 	const CSV = require('csv-string'); // open source csv parser and stringifier
 	const dwv = require('dwv'); // open source DICOM parser, viewer, and writer
@@ -364,11 +364,24 @@ Please give this file a proper extension or remove it from the input directory.
 		} else {
 			error(new Error('Input path does not exist!'));
 		}
+		return {
+			usr: usr,
+			files: files,
+			newPaths: newPaths,
+			failed: failed
+		};
 	}
 
-	if (inPath) {
-		start();
-	} else {
+	const end = () => {
+		cb([{
+			usr: usr,
+			files: files,
+			newPaths: newPaths,
+			failed: failed
+	}], opt);
+	}
+
+	const webStart = () => {
 		const bodyParser = require('body-parser');
 		const enableDestroy = require('server-destroy');
 		const express = require('express');
@@ -447,7 +460,14 @@ Please give this file a proper extension or remove it from the input directory.
 					start();
 					server.destroy(() => {
 						log('closing server');
+						end();
 					});
+				});
+			} else {
+				start();
+				server.destroy(() => {
+					log('closing server');
+					end();
 				});
 			}
 		});
@@ -463,10 +483,10 @@ Please give this file a proper extension or remove it from the input directory.
 		enableDestroy(server);
 	}
 
-	return {
-		usr: usr,
-		files: files,
-		newPaths: newPaths,
-		failed: failed
-	};
+	if (inPath) {
+		start();
+		end();
+	} else {
+		webStart();
+	}
 }
