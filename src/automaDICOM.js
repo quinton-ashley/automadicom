@@ -12,6 +12,7 @@ module.exports = function (args, opt, cb) {
 
 	// if automaDICOM is being run as a module, this will get the parent directory
 	// else it will just get the value of __dirname
+	const __homeDir = require('os').homedir();
 	const __parentDir = path.parse(process.mainModule.filename).dir;
 	const log = console.log;
 	// CLI args
@@ -419,8 +420,15 @@ Please give this file a proper extension or remove it from the input directory.
 
 		// when the user requests the landing page, render it with pug
 		app.get('/', (req, res) => {
-			usr.inPath = __parentDir + '/usr/input';
-			usr.outPath = __parentDir + '/usr/output';
+			if (/^win/.test(process.platform)) {
+				usr.inPath = __parentDir + '/usr/input';
+				usr.outPath = __parentDir + '/usr/output';
+			} else {
+				usr.inPath = __homeDir + '/Documents/automaDICOM/input';
+				usr.outPath = __homeDir + '/Documents/automaDICOM/output';
+			}
+			fs.ensureDirSync(usr.inPath);
+			fs.ensureDirSync(usr.outPath);
 			res.render('index', {
 				title: 'automaDICOM - ' + new Date().toString(),
 				usr: usr

@@ -1,9 +1,9 @@
 # automaDICOM
-Automatic DICOM tag value editor that uses dynamically evaluated rules to modify DICOM tag values.
+automaDICOM automatically modifies DICOM tag values based on dynamically evaluated rules.
 ## Requirements
 1. [Node.js and npm](https://nodejs.org)
 2. [Chrome](https://www.google.com/chrome/browser/desktop/index.html)
-3. [git](https://git-scm.com/downloads)
+3. [git](https://git-scm.com/downloads) (including Git Bash)
 4. Windows users must enable Developer Mode
 ## Installation Details
 1. Node.js and npm are required to run automaDICOM.  Node.js is a JavaScript runtime built on Chrome's V8 JavaScript engine.  Node.js' package ecosystem, npm, is the largest ecosystem of open source libraries in the world!  The backbone of this project is the incredible npm package, [DWV](https://github.com/ivmartel/dwv).  Install the LTS version of [Node.js and npm](https://nodejs.org) and use all the default settings.
@@ -54,12 +54,22 @@ numberTag;5
 thisTagToo; $dicomTagX + 'A1'
 anotherTag; 'prefix' + $dicomTagY.toLowerCase() + $dicomTagZ.slice(0,1)
 oneMoreTag; ( ($dicomTagZ.includes('Quinton Ashley')) ? 'author' : 'user' )
+tagAgain; ((a = $PatientID.slice(0,3).match(/(10|20|30)\d/)) ? a[0] : '400')
+file.base
 ```
-The program dynamically evaluates the replacement values by using the `eval()` function.  If you aren't a Javascript programmer take a look at the powerful methods you can use from the [String object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) and learn about [ternary operators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_Operator)!
+The program dynamically evaluates the replacement values by using the `eval()` function.  If you aren't a Javascript programmer take a look at the powerful methods you can use from the [String object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) and learn about [ternary operators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_Operator)!  The variable `file` is the original path of the file, you can get different elements of the file that are parsed by the node.js path module.  The variable `a` can be useful when using ternary operators.
+```
+┌─────────────────────┬────────────┐
+│          dir        │    base    │
+├──────┬              ├──────┬─────┤
+│ root │              │ name │ ext │
+"  /    home/user/dir / file  .txt "
+└──────┴──────────────┴──────┴─────┘
+```
 ## Output Directory and File Name Formats
 The second command line argument can be an existing or a directory you would like to create that the program has permission and is able to write to.  If no output directory is specified, all modified images will be placed in the same directory as the originals.
 ### Append CSV Format
-`append.csv` is another configuration file like `rules.csv`.  It lets you dynamically name new paths for output directories and files.  A template `append.csv` file is provided and stored in the automaDICOM directory in the `usr` folder.  If an output directory is specified on the command line, the append CSV is used.  Here's a generic example:
+`append.csv` is another configuration file like `rules.csv`.  It lets you dynamically structure new paths to append to the specified output directory.  A template `append.csv` file is provided and stored in the automaDICOM directory in the `usr` folder.  If an output directory is specified on the command line, the append CSV is used.  Here's a generic example:
 ```javascript
 'nameOfTheFirstLevelFolderToPutInTheOutputDirectory'
 'secondLevelFolder'
