@@ -449,8 +449,12 @@ Please give this file a proper extension or remove it from the input directory.
 		});
 
 		app.get('/exit', (req, res) => {
+			res.writeHead(200, {
+				'Content-Type': 'text/html'
+			});
+			res.end('Exit successful');
 			gracefulWebExit();
-		})
+		});
 
 
 		app.post('/submit', (req, res) => {

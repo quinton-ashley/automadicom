@@ -57,7 +57,7 @@ oneMoreTag; ( ($dicomTagZ.includes('Quinton Ashley')) ? 'author' : 'user' )
 tagAgain; ((a = $PatientID.slice(0,3).match(/(10|20|30)\d/)) ? a[0] : '400')
 file.base
 ```
-The program dynamically evaluates the replacement values by using the `eval()` function.  If you aren't a Javascript programmer take a look at the powerful methods you can use from the [String object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) and learn about [ternary operators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_Operator)!  The variable `file` is the original path of the file, you can get different elements of the file that are parsed by the node.js path module.  The variable `a` can be useful when using ternary operators.
+The program dynamically evaluates the replacement values by using the `eval()` function.  If you aren't a Javascript programmer take a look at the powerful methods you can use from the [String object](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String) and learn about [ternary operators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Conditional_Operator)!  The variable `file` is the original path of the file, you can get different elements of the file that are parsed by the [node.js path module](https://nodejs.org/api/path.html#path_path_parse_path).  The variable `a` can be useful when using ternary operators.
 ```
 ┌─────────────────────┬────────────┐
 │          dir        │    base    │
