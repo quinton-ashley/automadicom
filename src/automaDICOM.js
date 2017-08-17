@@ -413,7 +413,6 @@ Please give this file a proper extension or remove it from the input directory.
 		// sets the views folder as the main folder
 		app.use('/', express.static(__dirname + '/../views'));
 		app.set('views', __dirname + '/../views');
-		//		app.use(express.static(__dirname + '/../views'));
 		// sets up pug as the view engine
 		// pug is template framework for rendering html dynamically, like php but way better
 		app.set('view engine', 'pug');
