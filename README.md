@@ -13,9 +13,11 @@ automaDICOM automatically modifies DICOM tag values based on dynamically evaluat
   
 ## Running automaDICOM (Web UI)
 ### macOS
-Download the [user friendly automaDICOM app for macOS](https://github.com/quinton-ashley/automaDICOM_macOS) and put it in your `/Applications` folder (it won't work outside the Applications folder).
+Download the [user friendly automaDICOM app for macOS](https://github.com/quinton-ashley/automaDICOM_macOS) and put automaDICOM.app in your `/Applications` folder (it won't work outside the Applications folder).
 ### Windows
 On the [automaDICOM GitHub page](https://github.com/quinton-ashley/automaDICOM) click the green "Clone or Download" button to download in a ZIP file or use git clone if you're familiar with git.  Extract the ZIP file or clone automaDICOM into your Documents folder, or any other folder that doesn't require Admin privledges to read/write (for example don't put it in Program Files).  Run automaDICOM by double clicking on the `automaDICOM_Windows.bat` file.  You can drag the shortcut `.lnk` file to your Desktop for convience, don't move the `.bat` file itself though.
+### Exiting automaDICOM
+You must exit by clicking `Exit` in the navbar or the automaDICOM server will not close and you will get a "port already in use" error if you open another instance of automaDICOM.
 ## Input File/Directory Format
 The first command line argument to automaDICOM can be either a single image or directory with images or subdirectories that contain images.  This program does not edit any contents of the input file(s) but will add the `.dcm` extension to the file name if the improperly named DICOM file(s) doesn't(don't) have it.
 ## Rules CSV Format
