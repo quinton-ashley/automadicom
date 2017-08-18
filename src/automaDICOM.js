@@ -10,16 +10,26 @@ module.exports = function (args, opt, cb) {
 	const spawn = require('child_process').spawn; // built-in node.js child process spawn function
 	const stringSimilarity = require('string-similarity'); // open source string similarity algorithm
 
-	// if automaDICOM is being run as a module, this will get the parent directory
-	// else it will just get the value of __dirname
+	const log = console.log;
 	const __homeDir = require('os').homedir();
 	const __parentDir = path.parse(process.mainModule.filename).dir;
-	const log = console.log;
+	const __parentName = __parentDir.match(/(\w|-)+/g).pop();
+	const __usrDir = __homeDir + '/Pictures/' + __parentName;
 	// CLI args
 	let inPath = ((args[0] && args[0].toString().match(/\D+/)) ? args[0] : '');
 	let outPath = args[1];
-	const rulesPath = ((args[2]) ? args[2] : __parentDir + '/usr/rules.csv');
-	const appendPath = ((args[3]) ? args[3] : __parentDir + '/usr/append.csv');
+	if (!args[0]) {
+		inPath = __usrDir + '/input';
+		outPath = __usrDir + '/output';
+		fs.mkdirsSync(inPath);
+		fs.mkdirsSync(outPath);
+	}
+	const rulesPath = ((args[2]) ? args[2] : __usrDir + '/rules.csv');
+	const appendPath = ((args[3]) ? args[3] : __usrDir + '/append.csv');
+	if (fs.existsSync(__usrDir)) {
+		fs.outputFileSync(rulesPath, fs.readFileSync(__parentDir + '/usr/rules.csv', 'utf8'));
+		fs.outputFileSync(appendPath, fs.readFileSync(__parentDir + '/usr/append.csv', 'utf8'));
+	}
 
 	let files = [];
 	let tags = [];
@@ -36,7 +46,7 @@ module.exports = function (args, opt, cb) {
 		version: version
 	}
 
-	var a;
+	var a = 0;
 	exports.fulfillTagReqs = function (str, elements, tags, values, file) {
 
 		const getSubLevelTag = (tagReq) => {
@@ -381,6 +391,24 @@ Please give this file a proper extension or remove it from the input directory.
 				newPaths: newPaths,
 				failed: failed
 	}], opt);
+		} else if (files.length) {
+			let {
+				render
+			} = require('tree-from-paths');
+			let results = '';
+			for (let i = 0; i < files.length; i++) {
+				results += files[i] + '\n';
+				results += ((newPaths[i]) ? newPaths[i] : 'failed') + '\n';
+			}
+			let resultsTree = render(newPaths.filter((newPath) => {
+					return newPath;
+				}), outPath,
+				(parent, file, explicit) => {
+					return file;
+				}
+			);
+			results += '\nRESULTS TREE:\n\n' + resultsTree;
+			fs.outputFileSync(__usrDir + '/logs/' + new Date().toString() + '.txt', results);
 		}
 	}
 
@@ -419,15 +447,6 @@ Please give this file a proper extension or remove it from the input directory.
 
 		// when the user requests the landing page, render it with pug
 		app.get('/', (req, res) => {
-			if (/^win/.test(process.platform)) {
-				usr.inPath = __parentDir + '/usr/input';
-				usr.outPath = __parentDir + '/usr/output';
-			} else {
-				usr.inPath = __homeDir + '/Documents/automaDICOM/input';
-				usr.outPath = __homeDir + '/Documents/automaDICOM/output';
-			}
-			fs.ensureDirSync(usr.inPath);
-			fs.ensureDirSync(usr.outPath);
 			res.render('index', {
 				title: 'automaDICOM - ' + new Date().toString(),
 				usr: usr
@@ -466,8 +485,8 @@ Please give this file a proper extension or remove it from the input directory.
 			opt.o = ((req.body.o) ? true : false);
 			inPath = req.body.inPath;
 			outPath = req.body.outPath;
-			fs.writeFileSync(rulesPath, req.body.rules);
-			fs.writeFileSync(appendPath, req.body.append);
+			fs.outputFileSync(rulesPath, req.body.rules);
+			fs.outputFileSync(appendPath, req.body.append);
 			usr = {
 				inPath: inPath,
 				outPath: outPath,
@@ -512,7 +531,7 @@ Please give this file a proper extension or remove it from the input directory.
 	}
 
 
-	if (inPath) {
+	if (args[0] || opt.d) {
 		start();
 		end();
 	} else {
