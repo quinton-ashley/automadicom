@@ -19,11 +19,11 @@ On the [automaDICOM GitHub page](https://github.com/quinton-ashley/automaDICOM) 
 ### Exiting automaDICOM
 You must exit by clicking `Exit` in the navbar or the automaDICOM server will not close and you will get a "port already in use" error if you open another instance of automaDICOM.
 ## Default File Locations
-These locations will be created on the first run of automaDICOM and the rules and append files from `/usr` of automaDICOM will be copied.
-input directory: {homedir}/Pictures/automaDICOM/input
-output directory: {homedir}/Pictures/automaDICOM/output
-log directory: {homedir}/Pictures/automaDICOM/logs
-rules file: {homedir}/Pictures/automaDICOM/rules.csv
+These locations will be created on the first run of automaDICOM and the rules and append files from `/usr` of automaDICOM will be copied.  
+input directory: {homedir}/Pictures/automaDICOM/input  
+output directory: {homedir}/Pictures/automaDICOM/output  
+log directory: {homedir}/Pictures/automaDICOM/logs  
+rules file: {homedir}/Pictures/automaDICOM/rules.csv  
 append file: {homedir}/Pictures/automaDICOM/append.csv
 ## Input File/Directory Format
 The first command line argument to automaDICOM can be either a single image or directory with images or subdirectories that contain images.  This program does not edit any contents of the input file(s) but will add the `.dcm` extension to the file name if the improperly named DICOM file(s) doesn't(don't) have it.
