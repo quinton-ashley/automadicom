@@ -234,7 +234,7 @@ Please give this file a proper extension or remove it from the input directory.
 			// at the end of this loop it is assured that a unique file name has been created
 			for (i = 0; newPath == '' || newPaths.includes(newPath) || fs.existsSync(newPath); i++) {
 				if (i >= 1) {
-					newPath = `${dir}/${imgName}_${i.toString()}`;
+					newPath = `${dir}/${i.toString()}_${imgName}`;
 				} else {
 					newPath = `${dir}/${imgName}`;
 				}
