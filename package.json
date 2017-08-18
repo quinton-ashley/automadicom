@@ -57,11 +57,11 @@
     "url": "https://github.com/quinton-ashley/automaDICOM.git"
   },
   "scripts": {
-    "prestart": "git stash && git pull && git stash pop && npm up",
+    "prestart": "git stash && git pull && npm up",
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "version": "git add -A",
     "postversion": "git push && git push --tags && npm publish"
   },
-  "version": "0.5.9"
+  "version": "0.5.10"
 }
