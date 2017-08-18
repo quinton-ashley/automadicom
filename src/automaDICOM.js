@@ -448,7 +448,7 @@ Please give this file a proper extension or remove it from the input directory.
 		// when the user requests the landing page, render it with pug
 		app.get('/', (req, res) => {
 			res.render('index', {
-				title: 'automaDICOM - ' + new Date().toString(),
+				title: __parentName,
 				usr: usr
 			});
 		});
