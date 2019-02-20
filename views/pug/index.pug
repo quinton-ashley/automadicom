@@ -1,0 +1,47 @@
+doctype html
+html
+
+head
+link(rel='stylesheet' type='text/css' href=node_modules + '/bootstrap/dist/css/bootstrap.min.css')
+link(rel='stylesheet' type='text/css' href='../css/style.css')
+title= title
+
+body
+nav.navbar.sticky-top.d-flex.justify-content-center
+	ul.nav.d-flex.justify-content-center
+		li.nav-item: a.nav-link.m-0.p-0(href='#') #{title}
+			small.col-12.m-0.p-0.d-flex.justify-content-center #{version} 
+		li.nav-item: a.nav-link Input
+		li.nav-item: a.nav-link Tags
+		li.nav-item: a.nav-link Editor
+		li.nav-item: a.nav-link Output
+div.container.col-12.col-sm-12.col-md-12.col-lg-12.col-xl-10.justify-content-center.mb-2
+	div.row: div.col
+		form.form-inline.rounded.mb-0(action='/submit' role='form' method='POST'): div.container.col-12: div.form-group.row
+			div.input-group.input-group-sm.col-12.m-0.p-1
+				div.input-group-addon.col-2.justify-content-center Input File or Directory
+				input.form-control.form-control-sm(id='inPath' name='inPath' type='text')
+			div.input-group.input-group-sm.col-12.m-0.p-1
+				div.input-group-addon.col-2.justify-content-center Output Directory
+				input.form-control.form-control-sm(id='outPath' name='outPath' type='text')
+			div.input-group.input-group-sm.col-12.m-0.p-1
+				div.input-group-addon.col-2.justify-content-center Rules
+				textarea.form-control.form-control-sm(id='rules' name='rules' placeholder='user rules.csv file' type='text' rows='20')
+			div.input-group.input-group-sm.col-12.m-0.p-1
+				div.input-group-addon.col-2.justify-content-center Append
+				textarea.form-control.form-control-sm(id='append' name='append' placeholder='user append.csv file' type='text' rows='10')
+			div.form-check.px-2
+				input.form-check-input(type='checkbox' id='m' name='m')
+				label.form-check-label Copy Originals (no edits)
+			div.form-check.px-2
+				input.form-check-input(type='checkbox' id='s' name='s')
+				label.form-check-label Silent Log
+			div.form-check.px-2
+				input.form-check-input(type='checkbox' id='o' name='o')
+				label.form-check-label Log Output Only
+			div.input-group.input-group-sm.col-1.mx-auto.px-2
+				button.form-control.form-control-sm(type='submit') Start
+script.
+	console.log('opening index.pug');
+	console.log('#{node_modules}');
+	require('../js/automadicom.js')({__rootDir:'#{__rootDir}'});

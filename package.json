@@ -1,10 +1,70 @@
 {
   "author": "Quinton Ashley",
   "bin": {
-    "automaDICOM": "./index.js"
+    "automaDICOM": "./bin/automadicom.js"
   },
   "bugs": {
     "url": "https://github.com/quinton-ashley/automaDICOM/issues"
+  },
+  "build": {
+    "appId": "com.qashto.bottlenose",
+    "copyright": "Copyright © 2018 Quinton Ashley",
+    "electronVersion": "4.0.1",
+    "electronDownload": {
+      "version": "4.0.1"
+    },
+    "mac": {
+      "category": "public.app-category.game",
+      "target": [
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "publish": [
+        "github"
+      ]
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "publish": [
+        "github"
+      ]
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "publish": [
+        "github"
+      ]
+    }
   },
   "contributors": [
     {
@@ -13,29 +73,32 @@
     }
   ],
   "dependencies": {
+    "await-spawn": "^2.1.2",
     "body-parser": "^1.17.2",
     "bootstrap": "^4.0.0-beta",
     "chalk": "^2.1.0",
-    "csv-string": "^2.3.2",
-    "dwv": "^0.19.2",
-    "express": "^4.15.4",
-    "fs-extra": "^4.0.1",
-    "jquery": "^3.2.1",
+    "csv-string": "^3.1.5",
+    "delay": "^4.1.0",
+    "dwv": "^0.25.2",
+    "electron-pug": "^2.0.0",
+    "electron-updater": "^4.0.6",
+    "fs-extra": "^7.0.1",
+    "jquery": "^3.3.1",
+    "klaw": "^3.0.0",
     "markdown-it": "^8.3.2",
     "minimist": "^1.2.0",
-    "moment": "^2.18.1",
-    "open": "0.0.5",
+    "moment": "^2.24.0",
+    "mousetrap": "^1.6.2",
+    "opn": "^5.4.0",
+    "popper.js": "^1.14.6",
     "pug": "^2.0.0-rc.3",
     "recursive-search": "^1.0.1",
     "server-destroy": "^1.0.1",
-    "string-similarity": "^1.2.0",
-    "tether": "^1.4.0",
+    "string-similarity": "^3.0.0",
+    "tether": "^1.4.5",
     "tree-from-paths": "^1.0.0"
   },
-  "description": "CLI automatic DICOM editor",
-  "directories": {
-    "src": "src"
-  },
+  "description": "Automated DICOM editor",
   "entry point": "index.js",
   "keywords": [
     "dicom",
@@ -44,7 +107,7 @@
     "dwv"
   ],
   "license": "MIT",
-  "main": "index.js",
+  "main": "app.js",
   "maintainers": [
     {
       "name": "Quinton Ashley",
@@ -57,11 +120,18 @@
     "url": "https://github.com/quinton-ashley/automaDICOM.git"
   },
   "scripts": {
-    "prestart": "git stash && git pull && npm up",
-    "start": "node index.js",
+    "start": "electron .",
     "test": "echo \"Error: no test specified\" && exit 1",
+    "premiere": "O='{\"name\":\"'$npm_package_name'\",\"description\":\"'$npm_package_description'\",\"license_template\":\"'$npm_package_license'\"}' && echo \"${O}\" && curl -u $npm_package_author_name https://api.github.com/user/repos -d \"${O}\" && git init && git add -A && git commit -m $npm_package_version && git remote add origin 'https://github.com/'$npm_package_author_name'/'$npm_package_name'.git' && git pull origin master --allow-unrelated-histories --no-edit -q && git push --set-upstream origin master && git push && git push --tags",
+    "up-outdated": "npm install --save $(npm outdated | cut -d ' ' -f -1 | sed '1d' | sed 's/$/@*/')",
+    "rebuild": "npm rebuild --runtime=electron --target=4.0.1 --disturl=https://atom.io/download/atom-shell --abi=64",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder -m -l -w",
+    "gh-publish": "electron-builder -m -l -w -p always",
+    "postinstall": "electron-builder install-app-deps",
+    "v": "npm version patch --force",
     "version": "git add -A",
-    "postversion": "git push && git push --tags && npm publish"
+    "postversion": "git remote | xargs -L1 git push --all && git push --tags && npm publish"
   },
-  "version": "0.5.17"
+  "version": "0.5.18"
 }

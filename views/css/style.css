@@ -4,44 +4,46 @@
 }
 
 .hiddenRow {
-    padding: 0 !important;
+	padding: 0 !important;
 }
-qt {
+
+body {
 	color: #818c46;
+	background-color: #000;
 }
 
-nav {
-	background-color: #f9f8ef;
+form,
+input,
+nav,
+textarea {
+	background-color: #000!important;
+	/* background-color: #f9f8ef; */
 }
 
-div.progress-bar.qt {
+div.progress-bar {
 	color: #888c90;
 	background-color: #818c46;
 }
 
-a.qt:hover {
+a:hover {
 	color: #616c36;
 }
 
-a.qt {
+a {
 	color: #818c46;
 }
 
-button.btn.btn-secondary.qt {
+button.btn.btn-secondary {
 	color: #ffffff;
 	background-color: #818c46;
 }
 
-button.btn.btn-secondary.qt:hover {
+button.btn.btn-secondary:hover {
 	color: #ffffff;
 	background-color: #616c36;
 }
 
 .nav-link small {
-  display:block;
-  font-size:10px;
-}
-
-nav.qt, form.qt {
-	background-color: #ffffff;
+	display: block;
+	font-size: 10px;
 }

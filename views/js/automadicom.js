@@ -1,19 +1,25 @@
-module.exports = function (args, opt, cb) {
+module.exports = async function(opt) {
+	opt = opt || {};
+	opt._ = opt._ || [];
+	let args = opt._;
+	global.__rootDir = opt.__rootDir;
+	global.log = console.log;
+
 	const chalk = require('chalk'); // open source terminal text coloring library
 	const CSV = require('csv-string'); // open source csv parser and stringifier
 	const dwv = require('dwv'); // open source DICOM parser, viewer, and writer
 	const fs = require('fs-extra'); // open source library adds functionality to standard node.js fs
-	const open = require('open'); // open source web browser URL opener
+	const klaw = require('./klaw-async.js'); // open source recursive fs search
+	const opn = require('opn'); // open source file and web page opener
 	const path = require('path'); // built-in node.js path library
 	const process = require('process'); // built-in node.js process library
-	const search = require('recursive-search').recursiveSearchSync; // open source recursive fs search
-	const spawn = require('child_process').spawn; // built-in node.js child process spawn function
+	const spawn = require('await-spawn');
 	const stringSimilarity = require('string-similarity'); // open source string similarity algorithm
 
-	const log = console.log;
+
+
 	const __homeDir = require('os').homedir();
-	const __parentDir = path.parse(process.mainModule.filename).dir;
-	const __parentName = __parentDir.match(/(\w|-)+/g).pop();
+	const __parentName = path.parse(__rootDir).base;
 	const __usrDir = __homeDir + '/Pictures/' + __parentName;
 	// CLI args
 	let inPath = ((args[0] && args[0].toString().match(/\D+/)) ? args[0] : '');
@@ -21,14 +27,14 @@ module.exports = function (args, opt, cb) {
 	if (!args[0]) {
 		inPath = __usrDir + '/input';
 		outPath = __usrDir + '/output';
-		fs.mkdirsSync(inPath);
-		fs.mkdirsSync(outPath);
+		await fs.mkdirs(inPath);
+		await fs.mkdirs(outPath);
 	}
 	const rulesPath = ((args[2]) ? args[2] : __usrDir + '/rules.csv');
 	const appendPath = ((args[3]) ? args[3] : __usrDir + '/append.csv');
-	if (fs.existsSync(__usrDir)) {
-		fs.outputFileSync(rulesPath, fs.readFileSync(__parentDir + '/usr/rules.csv', 'utf8'));
-		fs.outputFileSync(appendPath, fs.readFileSync(__parentDir + '/usr/append.csv', 'utf8'));
+	if (await fs.exists(__usrDir)) {
+		await fs.outputFile(rulesPath, await fs.readFile(__rootDir + '/usr/rules.csv', 'utf8'));
+		await fs.outputFile(appendPath, await fs.readFile(__rootDir + '/usr/append.csv', 'utf8'));
 	}
 
 	let files = [];
@@ -37,17 +43,17 @@ module.exports = function (args, opt, cb) {
 	let newPaths = [];
 	let failed = [];
 	let append;
-	let version = require('../package.json').version;
+	let version = require(__rootDir + '/package.json').version;
 	let usr = {
 		inPath: inPath,
 		outPath: outPath,
-		rules: fs.readFileSync(rulesPath, 'utf8'),
-		append: fs.readFileSync(appendPath, 'utf8'),
+		rules: await fs.readFile(rulesPath, 'utf8'),
+		append: await fs.readFile(appendPath, 'utf8'),
 		version: version
 	}
 
 	var a = 0;
-	exports.fulfillTagReqs = function (str, elements, tags, values, file) {
+	const fulfillTagReqs = async function(str, elements, tags, values, file) {
 
 		const getSubLevelTag = (tagReq) => {
 			switch (tagReq) {
@@ -101,30 +107,31 @@ module.exports = function (args, opt, cb) {
 		}
 		return str;
 	}
+	exports.fulfillTagReqs = fulfillTagReqs;
 
 	const error = (err) => {
 		log(chalk.red(err.stack));
 	}
 
-	const cleanEmptyFoldersRecursively = (folder) => {
-		if (!fs.statSync(folder).isDirectory()) {
+	async function cleanEmptyFoldersRecursively(folder) {
+		if (!(await fs.statSync(folder)).isDirectory()) {
 			return 1;
 		}
-		let files = fs.readdirSync(folder);
+		let files = await fs.readdir(folder);
 		if (files.length >= 1) {
-			files.forEach((file) => {
+			for (file in files) {
 				let fullPath = folder + '/' + file;
-				cleanEmptyFoldersRecursively(fullPath);
-			});
-			files = fs.readdirSync(folder);
+				await cleanEmptyFoldersRecursively(fullPath);
+			}
+			files = await fs.readdir(folder);
 		}
 		if (files.length <= 1) {
 			if (files[0] == '.DS_Store') {
-				fs.unlinkSync(folder + '/' + files[0]);
+				await fs.unlink(folder + '/' + files[0]);
 			} else if (files.length == 1) {
 				return;
 			}
-			fs.rmdirSync(folder);
+			await fs.rmdir(folder);
 			log('removed: ', folder);
 		}
 	}
@@ -165,7 +172,7 @@ Times must be entered as a String in a standard format, ex:'HHMMSS'
 		}
 	}
 
-	const edit = (file) => {
+	async function edit(file) {
 		let i = 0;
 		// loads the parser and writer from the open source library DWV
 		let parser = new dwv.dicom.DicomParser();
@@ -204,14 +211,15 @@ Please give this file a proper extension or remove it from the input directory.
 				}
 			};
 			// rule objects conforms to the format the DICOM writer expects
-			tags.forEach((tag, i) => {
-				values.push(exports.fulfillTagReqs(rules[i], elements, tags, values, file));
+			for (let i = 0; i < tags.length; i++) {
+				let tag = tags[i];
+				values.push(await fulfillTagReqs(rules[i], elements, tags, values, file));
 				errorCheck(tag, values[i]);
 				dwvRules[tag] = {
 					action: 'replace',
 					value: values[i]
 				};
-			});
+			}
 			if (!opt.s) {
 				values.forEach((value, i) => {
 					log(`${tags[i]} = ${value}`);
@@ -228,9 +236,9 @@ Please give this file a proper extension or remove it from the input directory.
 		if (outPath) {
 			dir = outPath;
 			for (i = 0; i < append.length - 1; i++) {
-				dir += '/' + exports.fulfillTagReqs(append[i][0], elements, tags, values, file);
+				dir += '/' + await fulfillTagReqs(append[i][0], elements, tags, values, file);
 			}
-			imgName = exports.fulfillTagReqs(append[append.length - 1][0], elements, tags, values, file);
+			imgName = await fulfillTagReqs(append[append.length - 1][0], elements, tags, values, file);
 			// at the end of this loop it is assured that a unique file name has been created
 			for (i = 0; newPath == '' || newPaths.includes(newPath) || fs.existsSync(newPath); i++) {
 				if (i >= 1) {
@@ -249,34 +257,32 @@ Please give this file a proper extension or remove it from the input directory.
 		if (!opt.s) {
 			log('writing: ' + newPath + '\n');
 		}
-		// fs-extra makes any new directories if necessary
 		if (!opt.o) {
+			// if option m (move only) is false then write the new file to the output
+			// location, else move the original file to the output location
 			if (!opt.m) {
-				fs.outputFileSync(newPath, Buffer(new Uint8Array(buffer)));
+				await fs.outputFile(newPath, Buffer(new Uint8Array(buffer)));
 			} else {
-				fs.copySync(file, newPath);
+				await fs.copy(file, newPath);
 			}
 		}
 		newPaths.push(newPath);
 
 		if (!opt.o && opt.c) {
-			// if running in opt.c mode (opt.c operation) delete the original file
-			fs.unlink(file);
+			// if running with option c, delete the original file
+			await fs.unlink(file);
 		}
-		if (!opt.o && opt.f) {
-			let mod = [newPath, '-i', 'ImageLaterality=' + exports.fulfillTagReqs("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')", elements, tags, values, file), '-i', 'InstitutionName=Marin Breast Health'];
-			let dcmodify = spawn(__dirname + '/dcmodify', mod, {
-				stdio: 'inherit'
-			});
-
-			dcmodify.on('close', (code) => {
-				log(`child process exited with code ${code}`);
-				fs.unlink(newPath + '.bak');
-			});
-		}
+		// if (!opt.o && opt.f) {
+		// 	let mod = [newPath, '-i', 'ImageLaterality=' + await fulfillTagReqs("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')", elements, tags, values, file), '-i', 'InstitutionName=Marin Breast Health'];
+		// 	await spawn(__dirname + '/dcmodify', mod, {
+		// 		stdio: 'inherit'
+		// 	});
+		// 	log(`child process exited with code ${code}`);
+		// 	await fs.unlink(newPath + '.bak');
+		// }
 	};
 
-	const setup = () => {
+	async function setup() {
 		if (files === undefined || files.length == 0) {
 			error(new Error('invalid path, no files found'));
 			return;
@@ -299,7 +305,7 @@ Please give this file a proper extension or remove it from the input directory.
 		}
 
 		for (let i = 0; i < files.length; i++) {
-			if ((!fs.statSync(files[i]).isDirectory()) && files[i].match(/^(.*\.dcm|.*\.\d+|.*(\/|\\)[^.]+)$/gmi) && !files[i].match(/dir/i)) {
+			if ((!(await fs.stat(files[i])).isDirectory()) && files[i].match(/^(.*\.dcm|.*\.\d+|.*(\/|\\)[^.]+)$/gmi) && !files[i].match(/dir/i)) {
 				try {
 					edit(files[i], files);
 				} catch (err) {
@@ -334,7 +340,7 @@ Please give this file a proper extension or remove it from the input directory.
 					let newPath = stringSimilarity.findBestMatch(path.parse(file).dir.slice(inPath.length), dirs).bestMatch.target + '/' + base;
 					log('writing: ' + newPath + '\n');
 					if (!opt.o) {
-						fs.copySync(file, newPath);
+						await fs.copy(file, newPath);
 					}
 					newPaths[i] = newPath;
 					failed.splice(index, 1);
@@ -354,19 +360,19 @@ Please give this file a proper extension or remove it from the input directory.
 		}
 	}
 
-	const start = () => {
+	async function start() {
 		log('');
 		log('input: ' + inPath + '\n');
-		if (fs.existsSync(inPath)) {
+		if (await fs.exists(inPath)) {
 			// if the input path is a directory send it straight to the setup function
 			// else glob for leaves of the fs
-			if (fs.statSync(inPath).isDirectory()) {
+			if ((await fs.stat(inPath)).isDirectory()) {
 				// looks for files with no extensions, because sometimes DICOM files
 				// will be improperly named
 				files = search(/.*/, inPath);
 				setup();
 				if (!opt.o && opt.c) {
-					cleanEmptyFoldersRecursively(inPath);
+					await cleanEmptyFoldersRecursively(inPath);
 				}
 			} else {
 				files = [inPath];
@@ -383,14 +389,14 @@ Please give this file a proper extension or remove it from the input directory.
 		};
 	}
 
-	const end = () => {
+	async function end() {
 		if (cb) {
-			cb([{
+			return {
 				usr: usr,
 				files: files,
 				newPaths: newPaths,
 				failed: failed
-	}], opt);
+			};
 		} else if (files.length) {
 			let {
 				render
@@ -408,133 +414,34 @@ Please give this file a proper extension or remove it from the input directory.
 				}
 			);
 			results += '\nRESULTS TREE:\n\n' + resultsTree;
-			fs.outputFileSync(__usrDir + '/logs/' + new Date().toString() + '.txt', results);
+			await fs.outputFile(__usrDir + '/logs/' + new Date().toString() + '.txt', results);
 		}
 	}
 
-	const webStart = () => {
-		const bodyParser = require('body-parser');
-		const enableDestroy = require('server-destroy');
-		const express = require('express');
-		const md = require('markdown-it')();
-
-		// express is used to serve pages
-		let app = express();
-		let server;
-		const gracefulWebExit = () => {
-			log("\nGracefully shutting down from SIGINT (Ctrl-C)");
-			server.destroy(() => {
-				log('closing server');
-				process.exit();
-			});
-		}
-		// use body parser to easy fetch post body
-		app.use(bodyParser.urlencoded({
-			extended: true
-		}));
-		app.use(bodyParser.json());
-		// the static function allows us to retreive the content in the specified directory
-		app.use('/bootstrap', express.static(__parentDir + '/node_modules/bootstrap'));
-		app.use('/jquery', express.static(__parentDir + '/node_modules/jquery'));
-		app.use('/moment', express.static(__parentDir + '/node_modules/moment'));
-		app.use('/tether', express.static(__parentDir + '/node_modules/tether'));
-		// sets the views folder as the main folder
-		app.use('/', express.static(__dirname + '/../views'));
-		app.set('views', __dirname + '/../views');
-		// sets up pug as the view engine
-		// pug is template framework for rendering html dynamically, like php but way better
-		app.set('view engine', 'pug');
-
-		// when the user requests the landing page, render it with pug
-		app.get('/', (req, res) => {
-			res.render('index', {
-				title: __parentName,
-				usr: usr
-			});
-		});
-
-		app.get('/tutorial', (req, res) => {
-			let mark = __dirname + '/../README.md';
-			let file = fs.readFile(mark, 'utf8', (err, data) => {
-				if (err) {
-					error(err);
-				}
-				res.render('tutorial', {
-					title: 'automaDICOM Tutorial',
-					message: md.render(data.toString())
-				});
-			});
-		});
-
-		app.get('/exit', (req, res) => {
-			res.writeHead(200, {
-				'Content-Type': 'text/html'
-			});
-			res.end('Exit successful');
-			gracefulWebExit();
-		});
-
-
-		app.post('/submit', (req, res) => {
-			res.writeHead(200, {
-				'Content-Type': 'text/html'
-			});
-			res.end('<br><br><br>Starting... view your results in the terminal window<br><br><br>' + JSON.stringify(req.body));
-			opt.m = ((req.body.m) ? true : false);
-			opt.s = ((req.body.s) ? true : false);
-			opt.o = ((req.body.o) ? true : false);
-			inPath = req.body.inPath;
-			outPath = req.body.outPath;
-			fs.outputFileSync(rulesPath, req.body.rules);
-			fs.outputFileSync(appendPath, req.body.append);
-			usr = {
-				inPath: inPath,
-				outPath: outPath,
-				rules: req.body.rules,
-				append: req.body.append,
-				version: version
-			};
-			if (!/^win/.test(process.platform)) {
-				const focusOnTerminal = spawn('open', ['-a', 'Terminal'], {
-					cwd: __parentDir,
-					stdio: 'inherit'
-				});
-
-				focusOnTerminal.on('close', (code) => {
-					start();
-					server.destroy(() => {
-						log('closing server');
-						end();
-					});
-				});
-			} else {
-				start();
-				server.destroy(() => {
-					log('closing server');
-					end();
-				});
-			}
-		});
-
-		server = require('http').createServer(app);
-
-		// use local port
-		const port = ((args[0]) ? args[0] : 10002);
-		server.listen(port, () => {
-			log('server listening on port ' + port);
-			open('http://localhost:' + port + '/');
-		});
-		enableDestroy(server);
-		process.on('SIGINT', () => {
-			gracefulWebExit();
-		});
-	}
+	async function submit() {
+		opt.m = ((req.body.m) ? true : false);
+		opt.s = ((req.body.s) ? true : false);
+		opt.o = ((req.body.o) ? true : false);
+		inPath = req.body.inPath;
+		outPath = req.body.outPath;
+		await fs.outputFile(rulesPath, req.body.rules);
+		await fs.outputFile(appendPath, req.body.append);
+		usr = {
+			inPath: inPath,
+			outPath: outPath,
+			rules: req.body.rules,
+			append: req.body.append,
+			version: version
+		};
+		await start();
+		await end();
+	};
 
 
 	if (args[0] || opt.d) {
-		start();
-		end();
+		await start();
+		await end();
 	} else {
-		webStart();
+		// await webStart();
 	}
 }
