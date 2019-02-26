@@ -2,23 +2,15 @@ module.exports = async function(opt) {
 	opt = opt || {};
 	opt._ = opt._ || [];
 	let args = opt._;
-	global.__rootDir = opt.__rootDir;
-	global.log = console.log;
 
 	const chalk = require('chalk'); // open source terminal text coloring library
 	const CSV = require('csv-string'); // open source csv parser and stringifier
 	const dwv = require('dwv'); // open source DICOM parser, viewer, and writer
-	const fs = require('fs-extra'); // open source library adds functionality to standard node.js fs
-	const klaw = require('./klaw-async.js'); // open source recursive fs search
-	const opn = require('opn'); // open source file and web page opener
-	const path = require('path'); // built-in node.js path library
-	const process = require('process'); // built-in node.js process library
-	const spawn = require('await-spawn');
 	const stringSimilarity = require('string-similarity'); // open source string similarity algorithm
 
 
 
-	const __homeDir = require('os').homedir();
+	const __homeDir = os.homedir();
 	const __parentName = path.parse(__rootDir).base;
 	const __usrDir = __homeDir + '/Pictures/' + __parentName;
 	// CLI args

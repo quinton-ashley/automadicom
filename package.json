@@ -77,6 +77,7 @@
     "body-parser": "^1.17.2",
     "bootstrap": "^4.0.0-beta",
     "chalk": "^2.1.0",
+    "contro": "^2.1.2",
     "csv-string": "^3.1.5",
     "delay": "^4.1.0",
     "dwv": "^0.25.2",
@@ -131,7 +132,8 @@
     "postinstall": "electron-builder install-app-deps",
     "v": "npm version patch --force",
     "version": "git add -A",
-    "postversion": "git remote | xargs -L1 git push --all && git push --tags && npm publish"
+    "postversion": "git push",
+    "V": "git remote | xargs -L1 git push --all && git push --tags && npm publish"
   },
-  "version": "0.5.19"
+  "version": "0.5.20"
 }

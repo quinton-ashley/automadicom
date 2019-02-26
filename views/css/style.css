@@ -47,3 +47,28 @@ button.btn.btn-secondary:hover {
 	display: block;
 	font-size: 10px;
 }
+
+.row-x .uie {
+	font-size: 2vh;
+}
+
+.uie {
+	width: 100%;
+	height: 100%;
+	display: inline;
+	vertical-align: middle;
+	border-width: 1px;
+	border-style: solid;
+	border-color: transparent;
+}
+
+.uie:hover {
+	filter: brightness(1.2);
+	border-top-color: #818c46;
+	border-bottom-color: #818c46;
+}
+
+input,
+textarea {
+	width: 100%;
+}
