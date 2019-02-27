@@ -8,6 +8,7 @@ module.exports = async function(opt) {
 	global.os = require('os');
 	global.opn = require('opn');
 	global.path = require('path');
+	global.process = require('process');
 	global.spawn = require('await-spawn');
 
 	global.osType = os.type();
