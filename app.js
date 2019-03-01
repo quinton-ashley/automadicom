@@ -16,18 +16,15 @@ const setupPug = require('electron-pug');
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
 
-async function createWindow() {
-	let pkgPath = path.join(__rootDir, 'package.json');
-	log(pkgPath);
-	let package = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-	log('starting ' + package.name);
+let opt = require('minimist')(process.argv.slice(2));
+opt.app = true;
+opt.__rootDir = __rootDir.replace(/\\/g, '/');
 
+async function createWindow() {
 	try {
 		const locals = {
-			title: package.name,
-			__rootDir: __rootDir.replace(/\\/g, '/'),
-			node_modules: path.join(__rootDir, 'node_modules').replace(/\\/g, '/'),
-			version: require(__rootDir + '/package.json').version
+			opt: opt,
+			node_modules: path.join(__rootDir, 'node_modules').replace(/\\/g, '/')
 		};
 		log(locals);
 		let pug = await setupPug({
@@ -49,7 +46,7 @@ async function createWindow() {
 	mainWindow.loadURL(`file://${__dirname}/views/pug/index.pug`);
 
 	// Open the DevTools.
-	// mainWindow.webContents.openDevTools();
+	mainWindow.webContents.openDevTools();
 
 	// Emitted when the window is closed.
 	mainWindow.on('closed', function() {

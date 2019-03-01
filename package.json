@@ -9,9 +9,9 @@
   "build": {
     "appId": "com.qashto.bottlenose",
     "copyright": "Copyright © 2018 Quinton Ashley",
-    "electronVersion": "4.0.1",
+    "electronVersion": "4.0.6",
     "electronDownload": {
-      "version": "4.0.1"
+      "version": "4.0.6"
     },
     "mac": {
       "category": "public.app-category.game",
@@ -77,10 +77,10 @@
     "body-parser": "^1.17.2",
     "bootstrap": "^4.0.0-beta",
     "chalk": "^2.1.0",
-    "contro": "^2.1.2",
+    "contro-ui": "^1.0.8",
     "csv-string": "^3.1.5",
     "delay": "^4.1.0",
-    "dwv": "^0.25.2",
+    "dwv": "^0.19.2",
     "electron-pug": "^2.0.0",
     "fs-extra": "^7.0.1",
     "jquery": "^3.3.1",
@@ -134,5 +134,5 @@
     "postversion": "git push",
     "V": "git remote | xargs -L1 git push --all && git push --tags && npm publish"
   },
-  "version": "0.5.21"
+  "version": "0.5.22"
 }

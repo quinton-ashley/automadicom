@@ -1,36 +1,49 @@
 doctype html
 html
-  head
-    title= title
-    link(rel='stylesheet' type='text/css' href=node_modules + '/bootstrap/dist/css/bootstrap.min.css')
-    link(rel='stylesheet' type='text/css' href='../css/contro-ui.css')
-    link(rel='stylesheet' type='text/css' href='../css/style.css')
+	head
+		title= automadicom
+		link(rel='stylesheet' type='text/css' href=node_modules + '/bootstrap/dist/css/bootstrap.min.css')
+		link(rel='stylesheet' type='text/css' href=node_modules + '/contro-ui/dist/css/contro-ui.css')
+		link(rel='stylesheet' type='text/css' href='../css/style.css')
 
 body
-  nav.navbar.sticky-top.d-flex.justify-content-center
-    ul.nav.d-flex.justify-content-center.row-x
-      li.nav-item: a.nav-link.m-0.p-0(href='#') #{title}
-        small.col-12.m-0.p-0.d-flex.justify-content-center #{version} 
-      li.nav-item: #inputTab.uie.mx-2 Input
-      li.nav-item: #toolboxTab.uie.mx-2 Toolbox
-      li.nav-item: #editorTab.uie.mx-2 Editor
-      li.nav-item: #outputTab.uie.mx-2 Output
-  .container.col-12.col-sm-12.col-md-12.col-lg-12.col-xl-10.justify-content-center.mb-2: .row.px-2
-    .col-10.p-2
-      input#input(type='text' placeholder='/input/file/or/folder')
-    .uie.col-2.p-2(name='selectIn') Open
-    .col-10.p-2
-      input#output(type='text' placeholder='/output/folder')
-    .uie.col-2.p-2(name='selectOut') Output
-    .col-12.p-2
-      textarea#rules(type='text' placeholder='user rules.csv file' rows='20')
-    .col-12.p-2
-      textarea#appends(type='text' placeholder='user append.csv file' rows='10')
-    .uie.col.mx-2 Organize and Copy Only
-    .uie.col.mx-2 Silent Log
-    .uie.col.mx-2 Log Output Only
-    .uie.col.mx-2(name='start') Start
-  script.
-    console.log('opening index.pug');
-    console.log('#{node_modules}');
-    require('../js/index.js')({__rootDir:'#{__rootDir}'});
+	nav.navbar.p-0.titlebar
+		.cover.power.p-2.m-0: ul.nav.justify-content-left.m-0
+			h2.col.m-0.p-0 automadicom by Quinton Ashley
+			//- img.logoNav(src='../img/logo.png')
+		.cover.view.p-2.m-0: ul.nav.justify-content-right.m-0
+			li.nav-item
+				button#close X
+	.container.col-12.col-sm-12.col-md-12.col-lg-12.col-xl-10.justify-content-center.mb-2: .row.px-2
+		#input.col-12: .row
+			.col-10.my-2.pr-2.pl-0
+				input#inputPath(type='text' value='~/Pictures/automadicom/input')
+			.col-2.my-2: .row.justify-content-center
+				button.uie.btn.enabled.col(name='in') Select
+		#inputOptions.col-12: .row
+			.col-4.my-2.mx-0: .row.justify-content-center.mr-0
+				button.uie.btn.enabled.col(name='inFile') Select File
+			.col-4.my-2.mx-0: .row.justify-content-center.mx-0
+				button.uie.btn.enabled.col(name='inFiles') Select Files
+			.col-4.my-2.mx-0: .row.justify-content-center.ml-0
+				button.uie.btn.enabled.col(name='inDir') Select Folder
+		#output.col-12: .row
+			.col-10.my-2.pr-2.pl-0
+				input#outputPath(type='text' value='~/Pictures/automadicom/output')
+			.col-2.my-2: .row.justify-content-center
+				button.uie.btn.enabled.col(name='out') Select
+		#rules.col-12: .row
+			.col-10.my-2.pr-2.pl-0
+				input#rulesPath(type='text' value='~/Pictures/automadicom/rules.csv')
+			.col-2.my-2: .row.justify-content-center
+				button.uie.btn.enabled.col(name='rules') Select
+		#append.col-12: .row
+			.col-10.my-2.pr-2.pl-0
+				input#appendPath(type='text' value='~/Pictures/automadicom/append.csv')
+			.col-2.my-2: .row.justify-content-center
+				button.uie.btn.enabled.col(name='append') Select
+		button#start.uie.btn.enabled.col.p-2(name='start') Start
+	script.
+		console.log('opening index.pug');
+		console.log('#{node_modules}');
+		require('../js/index.js')(#{opt});

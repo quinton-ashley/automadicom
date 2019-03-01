@@ -3,31 +3,35 @@ module.exports = async function(opt) {
 	opt._ = opt._ || [];
 	let args = opt._;
 
+	if (opt.f) {
+		await require('./find-dicom.js')(opt);
+		return;
+	}
+
 	const chalk = require('chalk'); // open source terminal text coloring library
+
+	log('automadicom by quinton-ashley');
+	log('-i input -o ouput -h help');
+	if (opt.h || opt.help) {
+		log('example use: ');
+		log('video-up -i input/dir -o output/dir');
+		return;
+	}
+
 	const CSV = require('csv-string'); // open source csv parser and stringifier
 	const dwv = require('dwv'); // open source DICOM parser, viewer, and writer
 	const stringSimilarity = require('string-similarity'); // open source string similarity algorithm
+	const search = require('recursive-search').recursiveSearchSync; // open source recursive fs search
 
-
+	const __parentName = path.parse(__rootDir).base;
 
 	const __homeDir = os.homedir();
-	const __parentName = path.parse(__rootDir).base;
 	const __usrDir = __homeDir + '/Pictures/' + __parentName;
 	// CLI args
-	let inPath = ((args[0] && args[0].toString().match(/\D+/)) ? args[0] : '');
-	let outPath = args[1];
-	if (!args[0]) {
-		inPath = __usrDir + '/input';
-		outPath = __usrDir + '/output';
-		await fs.mkdirs(inPath);
-		await fs.mkdirs(outPath);
-	}
-	const rulesPath = ((args[2]) ? args[2] : __usrDir + '/rules.csv');
-	const appendPath = ((args[3]) ? args[3] : __usrDir + '/append.csv');
-	if (await fs.exists(__usrDir)) {
-		await fs.outputFile(rulesPath, await fs.readFile(__rootDir + '/usr/rules.csv', 'utf8'));
-		await fs.outputFile(appendPath, await fs.readFile(__rootDir + '/usr/append.csv', 'utf8'));
-	}
+	const inPath = opt.i || opt.input || __usrDir + '/input';
+	const outPath = opt.o || opt.ouput || __usrDir + '/output';
+	const rulesPath = opt.r || opt.rules || __usrDir + '/rules.csv';
+	const appendPath = opt.a || opt.append || __usrDir + '/append.csv';
 
 	let files = [];
 	let tags = [];
@@ -106,16 +110,16 @@ module.exports = async function(opt) {
 	}
 
 	async function cleanEmptyFoldersRecursively(folder) {
-		if (!(await fs.statSync(folder)).isDirectory()) {
+		if (!(await fs.stat(folder)).isDirectory()) {
 			return 1;
 		}
-		let files = await fs.readdir(folder);
+		let files = await klaw(folder);
 		if (files.length >= 1) {
 			for (file in files) {
 				let fullPath = folder + '/' + file;
 				await cleanEmptyFoldersRecursively(fullPath);
 			}
-			files = await fs.readdir(folder);
+			files = await klaw(folder);
 		}
 		if (files.length <= 1) {
 			if (files[0] == '.DS_Store') {
@@ -177,7 +181,7 @@ Times must be entered as a String in a standard format, ex:'HHMMSS'
 		}
 		try {
 			// parse the array buffer of the file
-			parser.parse(new Uint8Array(fs.readFileSync(file)).buffer);
+			parser.parse(new Uint8Array((await fs.readFile(file))).buffer);
 		} catch (err) {
 			throw new Error(`
 Error: failed to load ${file}
@@ -213,9 +217,14 @@ Please give this file a proper extension or remove it from the input directory.
 				};
 			}
 			if (!opt.s) {
-				values.forEach((value, i) => {
-					log(`${tags[i]} = ${value}`);
-				});
+				log(file + ' : ');
+				// for (let i = 0; i < values.length; i++) {
+				// 	log(`${tags[i]} = ${elements[tags[i]]}`);
+				// }
+				// log('new values :');
+				for (let i = 0; i < values.length; i++) {
+					log(`${tags[i]} = ${values[i]}`);
+				}
 			}
 			// the rules are applied immediately after they are set
 			writer.rules = dwvRules;
@@ -232,7 +241,7 @@ Please give this file a proper extension or remove it from the input directory.
 			}
 			imgName = await fulfillTagReqs(append[append.length - 1][0], elements, tags, values, file);
 			// at the end of this loop it is assured that a unique file name has been created
-			for (i = 0; newPath == '' || newPaths.includes(newPath) || fs.existsSync(newPath); i++) {
+			for (i = 0; newPath == '' || newPaths.includes(newPath) || (await fs.exists(newPath)); i++) {
 				if (i >= 1) {
 					newPath = `${dir}/${i.toString()}_${imgName}`;
 				} else {
@@ -249,7 +258,7 @@ Please give this file a proper extension or remove it from the input directory.
 		if (!opt.s) {
 			log('writing: ' + newPath + '\n');
 		}
-		if (!opt.o) {
+		if (!opt.n) {
 			// if option m (move only) is false then write the new file to the output
 			// location, else move the original file to the output location
 			if (!opt.m) {
@@ -260,11 +269,11 @@ Please give this file a proper extension or remove it from the input directory.
 		}
 		newPaths.push(newPath);
 
-		if (!opt.o && opt.c) {
+		if (!opt.n && opt.c) {
 			// if running with option c, delete the original file
 			await fs.unlink(file);
 		}
-		// if (!opt.o && opt.f) {
+		// if (!opt.n && opt.f) {
 		// 	let mod = [newPath, '-i', 'ImageLaterality=' + await fulfillTagReqs("$FrameLaterality.slice(0,1) + ' ' + (($CodeMeaning == 'cranio-caudal ')?'CC':'MLO')", elements, tags, values, file), '-i', 'InstitutionName=Marin Breast Health'];
 		// 	await spawn(__dirname + '/dcmodify', mod, {
 		// 		stdio: 'inherit'
@@ -331,7 +340,7 @@ Please give this file a proper extension or remove it from the input directory.
 					log(dirs);
 					let newPath = stringSimilarity.findBestMatch(path.parse(file).dir.slice(inPath.length), dirs).bestMatch.target + '/' + base;
 					log('writing: ' + newPath + '\n');
-					if (!opt.o) {
+					if (!opt.n) {
 						await fs.copy(file, newPath);
 					}
 					newPaths[i] = newPath;
@@ -363,7 +372,7 @@ Please give this file a proper extension or remove it from the input directory.
 				// will be improperly named
 				files = search(/.*/, inPath);
 				setup();
-				if (!opt.o && opt.c) {
+				if (!opt.n && opt.c) {
 					await cleanEmptyFoldersRecursively(inPath);
 				}
 			} else {
@@ -382,7 +391,7 @@ Please give this file a proper extension or remove it from the input directory.
 	}
 
 	async function end() {
-		if (cb) {
+		if (opt.cb) {
 			return {
 				usr: usr,
 				files: files,
@@ -410,30 +419,6 @@ Please give this file a proper extension or remove it from the input directory.
 		}
 	}
 
-	async function submit() {
-		opt.m = ((req.body.m) ? true : false);
-		opt.s = ((req.body.s) ? true : false);
-		opt.o = ((req.body.o) ? true : false);
-		inPath = req.body.inPath;
-		outPath = req.body.outPath;
-		await fs.outputFile(rulesPath, req.body.rules);
-		await fs.outputFile(appendPath, req.body.append);
-		usr = {
-			inPath: inPath,
-			outPath: outPath,
-			rules: req.body.rules,
-			append: req.body.append,
-			version: version
-		};
-		await start();
-		await end();
-	};
-
-
-	if (args[0] || opt.d) {
-		await start();
-		await end();
-	} else {
-		// await webStart();
-	}
+	await start();
+	await end();
 }
