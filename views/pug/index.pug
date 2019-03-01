@@ -46,4 +46,4 @@ body
 	script.
 		console.log('opening index.pug');
 		console.log('#{node_modules}');
-		require('../js/index.js')(#{opt});
+		require('../js/index.js')({__rootDir:'#{__rootDir}'});

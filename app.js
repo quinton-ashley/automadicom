@@ -16,14 +16,10 @@ const setupPug = require('electron-pug');
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow;
 
-let opt = require('minimist')(process.argv.slice(2));
-opt.app = true;
-opt.__rootDir = __rootDir.replace(/\\/g, '/');
-
 async function createWindow() {
 	try {
 		const locals = {
-			opt: opt,
+			__rootDir: __rootDir.replace(/\\/g, '/'),
 			node_modules: path.join(__rootDir, 'node_modules').replace(/\\/g, '/')
 		};
 		log(locals);
