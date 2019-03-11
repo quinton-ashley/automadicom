@@ -1,4 +1,5 @@
 module.exports = async function(opt) {
+	global.opt = opt;
 	global.log = console.log;
 	global.er = console.error;
 	global.__rootDir = opt.__rootDir;

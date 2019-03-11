@@ -7,7 +7,7 @@
     "url": "https://github.com/quinton-ashley/automaDICOM/issues"
   },
   "build": {
-    "appId": "com.qashto.bottlenose",
+    "appId": "com.qashto.automadicom",
     "copyright": "Copyright © 2018 Quinton Ashley",
     "electronVersion": "4.0.6",
     "electronDownload": {
@@ -77,11 +77,13 @@
     "body-parser": "^1.17.2",
     "bootstrap": "^4.0.0-beta",
     "chalk": "^2.1.0",
-    "contro-ui": "^1.0.8",
+    "contro": "^2.1.2",
+    "contro-ui": "^1.0.11",
     "csv-string": "^3.1.5",
     "delay": "^4.1.0",
     "dwv": "^0.19.2",
     "electron-pug": "^2.0.0",
+    "flat": "^4.1.0",
     "fs-extra": "^7.0.1",
     "jquery": "^3.3.1",
     "klaw": "^3.0.0",
@@ -102,6 +104,7 @@
   "entry point": "index.js",
   "keywords": [
     "dicom",
+    "dcmtk",
     "batch",
     "metadata editor",
     "dwv"
@@ -134,5 +137,5 @@
     "postversion": "git push",
     "V": "git remote | xargs -L1 git push --all && git push --tags && npm publish"
   },
-  "version": "0.5.23"
+  "version": "0.5.24"
 }

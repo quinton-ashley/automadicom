@@ -6,44 +6,45 @@ html
 		link(rel='stylesheet' type='text/css' href=node_modules + '/contro-ui/dist/css/contro-ui.css')
 		link(rel='stylesheet' type='text/css' href='../css/style.css')
 
-body
-	nav.navbar.p-0.titlebar
-		.cover.power.p-2.m-0: ul.nav.justify-content-left.m-0
-			h2.col.m-0.p-0 automadicom by Quinton Ashley
-			//- img.logoNav(src='../img/logo.png')
-		.cover.view.p-2.m-0: ul.nav.justify-content-right.m-0
-			li.nav-item
-				button#close X
-	.container.col-12.col-sm-12.col-md-12.col-lg-12.col-xl-10.justify-content-center.mb-2: .row.px-2
-		#input.col-12: .row
-			.col-10.my-2.pr-2.pl-0
-				input#inputPath(type='text' value='~/Pictures/automadicom/input')
-			.col-2.my-2: .row.justify-content-center
-				button.uie.btn.enabled.col(name='in') Select
-		#inputOptions.col-12: .row
-			.col-4.my-2.mx-0: .row.justify-content-center.mr-0
-				button.uie.btn.enabled.col(name='inFile') Select File
-			.col-4.my-2.mx-0: .row.justify-content-center.mx-0
-				button.uie.btn.enabled.col(name='inFiles') Select Files
-			.col-4.my-2.mx-0: .row.justify-content-center.ml-0
-				button.uie.btn.enabled.col(name='inDir') Select Folder
-		#output.col-12: .row
-			.col-10.my-2.pr-2.pl-0
-				input#outputPath(type='text' value='~/Pictures/automadicom/output')
-			.col-2.my-2: .row.justify-content-center
-				button.uie.btn.enabled.col(name='out') Select
-		#rules.col-12: .row
-			.col-10.my-2.pr-2.pl-0
-				input#rulesPath(type='text' value='~/Pictures/automadicom/rules.csv')
-			.col-2.my-2: .row.justify-content-center
-				button.uie.btn.enabled.col(name='rules') Select
-		#append.col-12: .row
-			.col-10.my-2.pr-2.pl-0
-				input#appendPath(type='text' value='~/Pictures/automadicom/append.csv')
-			.col-2.my-2: .row.justify-content-center
-				button.uie.btn.enabled.col(name='append') Select
-		button#start.uie.btn.enabled.col.p-2(name='start') Start
+body.dark
+	//- nav.titlebar.px-1
+	//- 	button.uie.window-button#close X
+	//- 	button.uie.window-button#minimize -
+	//- 	button.uie.window-button#fullscreen *
+	.container-fluid.h-100: .row.px-2.justify-content-center.h-100
+		#leftTab.col.collapse
+			#input.col-12: .row
+				.col-10.my-2.pr-2.pl-0
+					input#inputPath(type='text' value='~/Pictures/automadicom/input')
+				.col-2.my-2: .row.justify-content-center
+					button#in.uie.btn.enabled.col Select
+			#inputOptions.col-12: .row
+				.col-4.my-2.mx-0: .row.justify-content-center.mr-0
+					button#inFile.uie.btn.enabled.col Select File
+				.col-4.my-2.mx-0: .row.justify-content-center.mx-0
+					button#inFiles.uie.btn.enabled.col Select Files
+				.col-4.my-2.mx-0: .row.justify-content-center.ml-0
+					button#inDir.uie.btn.enabled.col Select Folder
+		#midTab.col.collapse.show
+			#rules.col-12: .row
+				.col-10.my-2.pr-2.pl-0
+					input#rulesPath(type='text' value='default')
+				.col-2.my-2: .row.justify-content-center
+					button#rules.uie.btn.enabled.col Select
+			#tags
+		#rightTab.col.collapse
+			#output.col-12: .row
+				.col-10.my-2.pr-2.pl-0
+					input#outputPath(type='text' value='~/Pictures/automadicom/output')
+				.col-2.my-2: .row.justify-content-center
+					button#out.uie.btn.enabled.col Select
+			#append.col-12: .row
+				.col-10.my-2.pr-2.pl-0
+					input#appendPath(type='text' value='~/Pictures/automadicom/append.csv')
+				.col-2.my-2: .row.justify-content-center
+					button#append.uie.btn.enabled.col Select
+			button#start.uie.btn.enabled.col.p-2 Start
 	script.
 		console.log('opening index.pug');
 		console.log('#{node_modules}');
-		require('../js/index.js')({__rootDir:'#{__rootDir}'});
+		require('../js/index.js')('#{opt}');

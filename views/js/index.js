@@ -1,7 +1,11 @@
 module.exports = async function(opt) {
+	if (typeof opt == 'string') {
+		opt = JSON.parse(opt.replace(/&quot;/g, '"'));
+	}
 	// opt.v = false; // quieter log
-	opt.electron = true;
 	await require(opt.__rootDir + '/core/setup.js')(opt);
+
+	const automadicom = await require(__rootDir + '/core/automadicom.js');
 
 	function select(asg, type) {
 		let x = dialog.select({
@@ -37,7 +41,7 @@ module.exports = async function(opt) {
 			select('output', 'dir');
 		} else if (act == 'start') {
 			log(opt);
-			await require(__rootDir + '/core/automadicom.js')(opt);
+			automadicom.start();
 		}
 		if (act == 'quit') {
 			app.exit();
@@ -48,4 +52,15 @@ module.exports = async function(opt) {
 	cui.start({
 		v: true
 	});
+
+	await automadicom.setup();
+	let tags = await automadicom.getTags(4);
+	log(tags);
+	// let tagFormFile = __rootDir + '/views/pug/tagForm.pug';
+	// tagFormFile = await fs.readFile(tagFormFile, 'utf8');
+	// for (let tag of tags) {
+	// 	$('#tags').append(pug(tagFormFile, {
+	// 		tags: tags
+	// 	}));
+	// }
 }
