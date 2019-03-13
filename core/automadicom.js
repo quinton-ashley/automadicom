@@ -24,7 +24,7 @@ let outPaths; // the new path of the files
 
 let dict; // dictionary with tag key to value pairs
 
-let tags; // tags we want to edit
+let tags; // all the tags in the current file
 let rules; // rules that get evaluated to make the tag's new value
 let values; // (for the cur fidx) stores the future values of the tags
 
@@ -33,19 +33,21 @@ let failed; // files that failed
 var a = 0;
 
 class AutomaDicom {
-	constructor() {}
+	constructor() {
+		this.dictID;
+	}
 
 	async setup() {
 		log('automadicom by quinton-ashley');
 		log('-i input -o output -h help');
-		if (opt.h || opt.help) {
+		if (arg.h || arg.help) {
 			//TODO cli help
 			log('TODO');
 			return;
 		}
 
-		dict = await fs.readFile(__rootDir + '/db/dicom.json', 'utf8');
-		dict = JSON.parse(dict);
+		this.dictID = await fs.readFile(__rootDir + '/db/dictID.json', 'utf8');
+		this.dictID = JSON.parse(this.dictID);
 
 		await this.setInput();
 		await this.setOutputDir();
@@ -53,8 +55,8 @@ class AutomaDicom {
 		await this.loadAppendFile();
 	}
 
-	async start(opt) {
-		if (!dict) await this.setup();
+	async start(arg) {
+		if (!files) await this.setup();
 
 		for (let i = 0; i < files.length; i++) {
 			if ((!(await fs.stat(files[i])).isDirectory()) &&
@@ -71,7 +73,7 @@ class AutomaDicom {
 			}
 			outPaths.push('');
 		}
-		if (!opt.n) {
+		if (!arg.n) {
 			await this.copyNonDicomFiles();
 		}
 
@@ -91,7 +93,7 @@ class AutomaDicom {
 			inPath = input;
 		} else {
 			if (files) return;
-			inPath = opt.i || opt.input || usrDir + '/input';
+			inPath = arg.i || arg.input || usrDir + '/input';
 		}
 
 		log('');
@@ -106,7 +108,7 @@ class AutomaDicom {
 			// looks for files with no extensions, because sometimes DICOM files
 			// will be improperly named
 			files = await klaw(inPath);
-			if (!opt.n && opt.c) {
+			if (!arg.n && arg.c) {
 				await this.cleanEmptyFoldersRecursively(inPath);
 			}
 		} else {
@@ -125,21 +127,21 @@ class AutomaDicom {
 			outDir = output;
 		} else {
 			if (outDir) return;
-			outDir = opt.o || opt.output || usrDir + '/output'
+			outDir = arg.o || arg.output || usrDir + '/output'
 		}
 	}
 
 	async loadRulesFile(rulesFile) {
 		let rulesText;
 		if (!rulesFile) {
-			rulesFile = opt.r || opt.rules || usrDir + '/rules.csv';
+			rulesFile = arg.r || arg.rules || usrDir + '/rules.csv';
 		}
 		rulesText = await fs.readFile(rulesFile, 'utf8');
 		this.setRules(rulesText);
 	}
 
 	setRules(rulesText) {
-		if (opt.m) {
+		if (arg.m) {
 			return;
 		}
 
@@ -148,17 +150,12 @@ class AutomaDicom {
 			er('rules files has no rules!');
 			return;
 		}
-		tags = [];
-		rules = [];
-		for (let line of lines) {
-			tags.push(line[0]);
-			rules.push(line[1]);
-		}
+		// TODO
 	}
 
 	async loadAppendFile(appendFile) {
 		if (!appendFile) {
-			appendFile = opt.a || opt.append || usrDir + '/append.csv';
+			appendFile = arg.a || arg.append || usrDir + '/append.csv';
 		}
 		append = CSV.parse(await fs.readFile(appendFile, 'utf8'), ';');
 	}
@@ -170,46 +167,44 @@ class AutomaDicom {
 	async getTags(file) {
 		file = this._fileAmb(file);
 		log(file);
-		let meta = await dcmtk.getTags(file);
-		log(meta);
-		meta = flatten(meta);
-		return meta;
+		tags = await dcmtk.getTags(file);
+		return tags;
 	}
 
 	async edit(file) {
 		file = this._fileAmb(file);
-		if (!opt.s) {
+		if (!arg.s) {
 			log('loading: ' + file);
 		}
 		this.getTags();
-		if (opt.l) {
+		if (arg.l) {
 			log(JSON.stringify(data, null, 2));
 		}
 
-		if (!opt.m) {
-
-			for (let i = 0; i < tags.length; i++) {
-				let tag = tags[i];
-				values.push(await fulfillTagReqs(rules[i]));
-				errorCheck(tag, values[i]);
-			}
-			if (!opt.s) {
-				log(file + ' : ');
-				for (let i = 0; i < values.length; i++) {
-					log(`${tags[i]} = ${values[i]}`);
-				}
-			}
+		if (!arg.m) {
+			//
+			// for (let i = 0; i < tags.length; i++) {
+			// 	let tag = tags[i];
+			// 	values.push(await fulfillTagReqs(rules[i]));
+			// 	errorCheck(tag, values[i]);
+			// }
+			// if (!arg.s) {
+			// 	log(file + ' : ');
+			// 	for (let i = 0; i < values.length; i++) {
+			// 		log(`${tags[i]} = ${values[i]}`);
+			// 	}
+			// }
 		}
 		let outPath = await getOutPath(file);
-		if (!opt.s) {
+		if (!arg.s) {
 			log('writing: ' + outPath + '\n');
 		}
 
 
-		if (!opt.n) {
-			// if option m (move only) is false then write the new file to the output
+		if (!arg.n) {
+			// if argion m (move only) is false then write the new file to the output
 			// location, else move the original file to the output location
-			if (!opt.m) {
+			if (!arg.m) {
 				// await fs.copy(todo, outPath);
 				// await fs.unlink();
 			} else {
@@ -218,8 +213,8 @@ class AutomaDicom {
 		}
 		outPaths.push(outPath);
 
-		if (!opt.n && opt.c) {
-			// if running with option c, delete the original file
+		if (!arg.n && arg.c) {
+			// if running with argion c, delete the original file
 			await fs.unlink(file);
 		}
 	}

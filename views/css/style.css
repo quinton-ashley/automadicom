@@ -7,7 +7,6 @@
 body,
 html {
 	width: 100%;
-	height: 100%;
 	margin: 0;
 	padding: 0;
 }
@@ -40,7 +39,7 @@ html {
 }
 
 body {
-	color: #0cc;
+	color: #818c46;
 	background-color: #000;
 	font-size: 20px;
 }
@@ -52,7 +51,12 @@ body {
 form,
 input,
 nav,
-textarea {
+table,
+tbody,
+td,
+textarea,
+th,
+tr {
 	background-color: #000!important;
 	color: #eee;
 }
@@ -67,7 +71,7 @@ div.progress-bar {
 }
 
 .btn.enabled {
-	background-color: #0cc;
+	background-color: #818c46;
 }
 
 .text-align-center {
@@ -76,7 +80,7 @@ div.progress-bar {
 
 a,
 a:hover {
-	color: #0cc;
+	color: #818c46;
 }
 
 .nav-link small {
@@ -102,8 +106,31 @@ a:hover {
 	border-bottom-color: #818c46;
 }
 
+.td-has-input {
+	font-size: 0;
+}
+
+td input {
+	font-size: 20px;
+	border-width: 0;
+}
+
 input,
 textarea {
 	width: 100%;
 	height: 100%;
+}
+@font-face {
+	font-family: IBMPlexMono;
+	src: local("IBM Plex Mono Regular"), local("IBMPlexMono-Regular"), url("../fonts/IBMPlexMono-Regular.ttf");
+	font-weight: regular;
+}
+@font-face {
+	font-family: IBMPlexMono;
+	src: local("IBM Plex Mono Bold"), local("IBMPlexMono-Bold"), url("../fonts/IBMPlexMono-Bold.ttf");
+	font-weight: bold;
+}
+
+body {
+	font-family: IBMPlexMono;
 }

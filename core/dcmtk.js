@@ -2,6 +2,10 @@ const child = require('child_process').spawn;
 const dcm2json = `${__rootDir}/dcmtk/${osType}/dcm2json${((mac)?'':'.exe')}`;
 const dcmodify = `${__rootDir}/dcmtk/${osType}/dcmodify{((mac)?'':'.exe')}`;
 
+
+let dictID;
+let dictVR;
+
 class DCMTK {
 	constructor() {}
 
@@ -9,17 +13,16 @@ class DCMTK {
 		return new Promise((resolve, reject) => {
 			let cmd = child(dcm2json, [file, '-fc']);
 			let str = '';
-			let json;
 
 			let filterResults = () => {
-				json = JSON.parse(str);
-				for (let prop in json) {
-					if (json[prop].InlineBinary) {
-						delete json[prop];
+				let tags = JSON.parse(str);
+				for (let id in tags) {
+					if (tags[id].InlineBinary) {
+						delete tags[id];
 					}
 				}
-				resolve(json);
-			}
+				resolve(tags);
+			};
 
 			cmd.stdout.on('data', (data) => {
 				data = data.toString();

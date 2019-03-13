@@ -2,16 +2,14 @@ doctype html
 html
 	head
 		title= automadicom
+		meta(charset='utf-8')
 		link(rel='stylesheet' type='text/css' href=node_modules + '/bootstrap/dist/css/bootstrap.min.css')
+		link(rel='stylesheet' type='text/css' href=node_modules + '/bootstrap-table/dist/bootstrap-table.min.css')
 		link(rel='stylesheet' type='text/css' href=node_modules + '/contro-ui/dist/css/contro-ui.css')
 		link(rel='stylesheet' type='text/css' href='../css/style.css')
 
 body.dark
-	//- nav.titlebar.px-1
-	//- 	button.uie.window-button#close X
-	//- 	button.uie.window-button#minimize -
-	//- 	button.uie.window-button#fullscreen *
-	.container-fluid.h-100: .row.px-2.justify-content-center.h-100
+	.container-fluid.p-0.h-100: .row.justify-content-center.m-0.h-100
 		#leftTab.col.collapse
 			#input.col-12: .row
 				.col-10.my-2.pr-2.pl-0
@@ -25,13 +23,19 @@ body.dark
 					button#inFiles.uie.btn.enabled.col Select Files
 				.col-4.my-2.mx-0: .row.justify-content-center.ml-0
 					button#inDir.uie.btn.enabled.col Select Folder
-		#midTab.col.collapse.show
+		#midTab.col.p-0.collapse.show
 			#rules.col-12: .row
 				.col-10.my-2.pr-2.pl-0
 					input#rulesPath(type='text' value='default')
 				.col-2.my-2: .row.justify-content-center
 					button#rules.uie.btn.enabled.col Select
-			#tags
+			table#tagsTable.table.table-hover
+				thead: tr
+					th(data-field="id" data-sortable="true") ID
+					th(data-field="vr" data-sortable="true") VR
+					th(data-field="name" data-sortable="true") Name
+					th(data-field="value" data-sortable="true" data-formatter="valueFormatter") Value
+				tbody#tags.border-top-0.border-bottom-0
 		#rightTab.col.collapse
 			#output.col-12: .row
 				.col-10.my-2.pr-2.pl-0
@@ -47,4 +51,9 @@ body.dark
 	script.
 		console.log('opening index.pug');
 		console.log('#{node_modules}');
-		require('../js/index.js')('#{opt}');
+
+		function valueFormatter(x) {
+			return `<input value="${x}">`;
+		}
+
+		require('../js/index.js')('#{arg}');

@@ -2,14 +2,14 @@
 
 (async function() {
 	const log = console.log;
-	let opt = require('minimist')(process.argv.slice(2));
-	opt.__rootDir = __dirname;
-	if (opt.i || opt.h) {
-		await require('./core/setup.js')(opt);
-		await require('./core/automadicom.js').start(opt);
+	let arg = require('minimist')(process.argv.slice(2));
+	arg.__rootDir = __dirname;
+	if (arg.i || arg.h) {
+		await require('./core/setup.js')(arg);
+		await require('./core/automadicom.js').start(arg);
 		return;
 	} else {
-		opt.electron = true;
+		arg.electron = true;
 	}
 
 	const {
@@ -28,7 +28,7 @@
 	async function createWindow() {
 		try {
 			const locals = {
-				opt: JSON.stringify(opt),
+				arg: JSON.stringify(arg),
 				node_modules: path.join(__dirname, 'node_modules').replace(/\\/g, '/')
 			};
 			log(locals);
