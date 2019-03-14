@@ -134,10 +134,14 @@ class AutomaDicom {
 	async loadRulesFile(rulesFile) {
 		let rulesText;
 		if (!rulesFile) {
-			rulesFile = arg.r || arg.rules || usrDir + '/rules.csv';
+			rulesFile = arg.r || arg.rules || usrDir + '/config/default/edit.csv';
 		}
-		rulesText = await fs.readFile(rulesFile, 'utf8');
-		this.setRules(rulesText);
+		try {
+			rulesText = await fs.readFile(rulesFile, 'utf8');
+			this.setRules(rulesText);
+		} catch (ror) {
+			er(ror);
+		}
 	}
 
 	setRules(rulesText) {
@@ -155,9 +159,13 @@ class AutomaDicom {
 
 	async loadAppendFile(appendFile) {
 		if (!appendFile) {
-			appendFile = arg.a || arg.append || usrDir + '/append.csv';
+			appendFile = arg.a || arg.append || usrDir + '/config/default/output.csv';
 		}
-		append = CSV.parse(await fs.readFile(appendFile, 'utf8'), ';');
+		try {
+			append = CSV.parse(await fs.readFile(appendFile, 'utf8'), ';');
+		} catch (ror) {
+			er(ror);
+		}
 	}
 
 	setAppend(appendArr) {
