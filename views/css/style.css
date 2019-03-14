@@ -30,7 +30,7 @@ html {
 }
 
 .selected {
-	background-color: brown;
+	background-color: #818c46;
 	color: #FFF;
 }
 
@@ -66,12 +66,42 @@ div.progress-bar {
 	background-color: #818c46;
 }
 
+.btn.active,
+.btn:active,
+.btn:focus,
+.tab.active,
+.tab:active,
+.tab:focus {
+	outline: 0;
+	box-shadow: none;
+}
+
 .btn {
-	background-color: #044;
+	background-color: #444;
 }
 
 .btn.enabled {
 	background-color: #818c46;
+}
+
+.tab {
+	border-radius: 15px 15px 0 0;
+	background-color: #000!important;
+	color: #777;
+	border-top: #777 6px solid !important;
+	margin-top: 5px;
+	margin-left: 5px;
+	margin-right: 5px;
+	padding: 5px;
+}
+
+.tab.enabled {
+	color: #818c46;
+	border-top: #818c46 6px solid !important;
+}
+
+.tab:hover {
+	border-bottom: 0;
 }
 
 .text-align-center {
@@ -115,6 +145,10 @@ td input {
 	border-width: 0;
 }
 
+div.float-left.search {
+	width: 100%!important;
+}
+
 input,
 textarea {
 	width: 100%;
@@ -133,4 +167,8 @@ textarea {
 
 body {
 	font-family: IBMPlexMono;
+}
+
+span.card-view-value {
+	display: inline-block;
 }

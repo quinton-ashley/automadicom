@@ -1,7 +1,4 @@
 module.exports = async function(arg) {
-	if (typeof arg == 'string') {
-		arg = JSON.parse(arg.replace(/&quot;/g, '"'));
-	}
 	// arg.v = false; // quieter log
 	await require(arg.__rootDir + '/core/setup.js')(arg);
 
@@ -27,7 +24,7 @@ module.exports = async function(arg) {
 	// const bootstrapTable = require('bootstrap-table');
 	const automadicom = await require(__rootDir + '/core/automadicom.js');
 
-	function select(asg, type) {
+	async function select(asg, type) {
 		let x = dialog.select({
 			type: type
 		});
@@ -36,6 +33,7 @@ module.exports = async function(arg) {
 			x = x[0];
 		}
 		$('#' + asg + 'Path').val(x);
+		if (asg == 'input') await selectInput(x);
 		return x;
 	}
 
@@ -44,21 +42,25 @@ module.exports = async function(arg) {
 	cui.setCustomActions(async function(act, isBtn) {
 		log(act);
 		let ui = cui.ui;
-		if (act == 'in') {
-			$('#inputOptions').show('blind');
-		} else if (act == 'inFile') {
-			select('input', 'dir');
+		if (act.includes('Toggle')) {
+			$('#' + ui + 'Toggle').removeClass('enabled');
+			$('#' + ui).hide('blind');
+			cui.change(act.slice(0, -6));
+			$('#' + cui.ui).show('blind');
+			$('#' + act).addClass('enabled');
+		}
+		if (act == 'inFile') {
+			await select('input', 'file');
 		} else if (act == 'inFiles') {
-			select('input', 'files');
-			$('#inputOptions').hide('blind');
+			await select('input', 'files');
 		} else if (act == 'inDir') {
-			select('input', 'dir');
+			await select('input', 'dir');
 		} else if (act == 'rules') {
-			select('rules', 'file');
+			await select('rules', 'file');
 		} else if (act == 'append') {
-			select('append', 'file');
-		} else if (act == 'out') {
-			select('output', 'dir');
+			await select('append', 'file');
+		} else if (act == 'output') {
+			await select('output', 'dir');
 		} else if (act == 'start') {
 			log(arg);
 			automadicom.start();
@@ -68,28 +70,20 @@ module.exports = async function(arg) {
 		}
 	});
 
-	cui.change('main');
-	cui.start({
-		v: true
-	});
-
-	await automadicom.setup();
-	let tags = await automadicom.getTags(4);
-	let flatTags = [];
-
-	function tagIDToJSVariable(id) {
-		return 'x' + id.substr(0, 4) + '_' + id.substr(4, 8);
-	}
-
-	function flattenTags(meta, level) {
+	function flattenTags(meta, level, idBase) {
+		let flatTags = [];
+		if (!level) level = 0;
+		if (!idBase) idBase = '';
+		let i = 0;
 		for (let id in meta) {
 			let tag = meta[id];
 			if (tag.id) {
 				continue;
 			}
-			tag.name = '--'.repeat(level);
-			tag.name += automadicom.dictID[id] || 'UnknownTagName';
-			tag.id = tagIDToJSVariable(id);
+			tag.name = automadicom.dictID[id] || 'UnknownTagName';
+			if (level == 0) tag.pos = i;
+			if (level >= 1) tag.pos = idBase + '.' + i;
+			tag.id = id.substr(0, 4) + '_' + id.substr(4, 8);
 			if (!tag.Value) {
 				tag.value = '';
 				delete tag.Value;
@@ -97,33 +91,58 @@ module.exports = async function(arg) {
 			}
 			let sub;
 			if (typeof tag.Value[0] != 'object') {
-				if (tag.Value.length == 1 &&
-					typeof tag.Value[0] != 'number') {
-					tag.value = tag.Value[0];
+				if (tag.Value.length == 1) {
+					if (typeof tag.Value[0] == 'number') {
+						tag.value = tag.Value[0];
+					} else if (typeof tag.Value[0] == 'string') {
+						tag.value = '&quot;' + tag.Value[0] + '&quot;';
+					}
 				} else {
-					tag.value = tag.Value.toString();
+					if (typeof tag.Value[0] == 'number') {
+						tag.value = '[' + tag.Value.toString() + ']';
+					} else if (typeof tag.Value[0] == 'string') {
+						tag.value = '[';
+						for (let i in tag.Value) {
+							if (!tag.Value[i]) break;
+							if (i != 0) tag.value += ',';
+							tag.value += '&quot;' + tag.Value[i] + '&quot;';
+						}
+						tag.value += ']';
+					}
 				}
 			} else if (tag.Value[0].Alphabetic) {
 				tag.value = tag.Value[0].Alphabetic;
 			} else {
-				tag.value = [];
-				for (let id1 in tag.Value[0]) {
-					tag.value.push(tagIDToJSVariable(id1));
-				}
-				tag.value = tag.value.toString().replace(/"/g, '');
+				tag.value = '[ ... ]';
 				sub = tag.Value[0];
 			}
 			delete tag.Value;
 			flatTags.push(tag);
 			if (sub) {
-				flattenTags(sub, level + 1);
+				flatTags.concat(flattenTags(sub, level + 1, tag.pos));
 			}
+			i++;
 		}
+		return flatTags;
 	}
 
-	flattenTags(tags, 0);
-
-	$('#tagsTable').bootstrapTable({
-		data: flatTags
+	cui.change('leftTab');
+	cui.start({
+		v: true
 	});
+
+	await automadicom.setup();
+
+	async function selectInput(x) {
+		let tags = await automadicom.getTags(x);
+		let flatTags = [];
+		flatTags = flattenTags(tags);
+
+		$('#tagsTable').bootstrapTable({
+			data: flatTags
+		});
+		$('table.table').removeClass('table-bordered');
+		$('input.form-control').removeClass('form-control').addClass('p-2');
+		$('div.float-left.search').addClass('mt-0');
+	}
 }

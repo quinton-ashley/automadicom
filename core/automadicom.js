@@ -12,7 +12,7 @@ const er = (ror) => {
 }
 
 let version = require(__rootDir + '/package.json').version;
-const usrDir = os.homedir() + '/Pictures/' + path.parse(__rootDir).base;
+const usrDir = os.homedir() + '/Documents/automadicom';
 
 let inPath;
 let files; // input file paths

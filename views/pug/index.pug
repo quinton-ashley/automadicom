@@ -1,7 +1,7 @@
 doctype html
 html
 	head
-		title= automadicom
+		title automadicom
 		meta(charset='utf-8')
 		link(rel='stylesheet' type='text/css' href=node_modules + '/bootstrap/dist/css/bootstrap.min.css')
 		link(rel='stylesheet' type='text/css' href=node_modules + '/bootstrap-table/dist/bootstrap-table.min.css')
@@ -10,41 +10,43 @@ html
 
 body.dark
 	.container-fluid.p-0.h-100: .row.justify-content-center.m-0.h-100
-		#leftTab.col.collapse
-			#input.col-12: .row
-				.col-10.my-2.pr-2.pl-0
-					input#inputPath(type='text' value='~/Pictures/automadicom/input')
-				.col-2.my-2: .row.justify-content-center
-					button#in.uie.btn.enabled.col Select
-			#inputOptions.col-12: .row
+		#tabToggles.col-12: .row
+			button#leftTabToggle.uie.tab.col.enabled Input
+			button#midTabToggle.uie.tab.col Tag Editor
+			button#rightTabToggle.uie.tab.col Output
+		#leftTab.col.p-0.collapse.show
+			#inputRow.col-12: .row
+				.col-12.my-2.p-0
+					input#inputPath.p-2(type='text' value='~/Documents/automadicom/input')
 				.col-4.my-2.mx-0: .row.justify-content-center.mr-0
 					button#inFile.uie.btn.enabled.col Select File
 				.col-4.my-2.mx-0: .row.justify-content-center.mx-0
 					button#inFiles.uie.btn.enabled.col Select Files
 				.col-4.my-2.mx-0: .row.justify-content-center.ml-0
 					button#inDir.uie.btn.enabled.col Select Folder
-		#midTab.col.p-0.collapse.show
-			#rules.col-12: .row
+		#midTab.col.p-0.collapse
+			#rulesRow.col-12: .row
 				.col-10.my-2.pr-2.pl-0
-					input#rulesPath(type='text' value='default')
+					input#rulesPath.p-2(type='text' value='Default Edit Config')
 				.col-2.my-2: .row.justify-content-center
 					button#rules.uie.btn.enabled.col Select
-			table#tagsTable.table.table-hover
+			table#tagsTable.table.table-dark(data-search="true" data-search-align="left" data-id-field="pos")
 				thead: tr
+					th(data-field="pos" data-sortable="true") #
 					th(data-field="id" data-sortable="true") ID
 					th(data-field="vr" data-sortable="true") VR
 					th(data-field="name" data-sortable="true") Name
 					th(data-field="value" data-sortable="true" data-formatter="valueFormatter") Value
 				tbody#tags.border-top-0.border-bottom-0
-		#rightTab.col.collapse
-			#output.col-12: .row
+		#rightTab.col.p-0.collapse
+			#outputRow.col-12: .row
 				.col-10.my-2.pr-2.pl-0
-					input#outputPath(type='text' value='~/Pictures/automadicom/output')
+					input#outputPath.p-2(type='text' value='~/Documents/automadicom/output')
 				.col-2.my-2: .row.justify-content-center
-					button#out.uie.btn.enabled.col Select
-			#append.col-12: .row
+					button#output.uie.btn.enabled.col Select
+			#appendRow.col-12: .row
 				.col-10.my-2.pr-2.pl-0
-					input#appendPath(type='text' value='~/Pictures/automadicom/append.csv')
+					input#appendPath.p-2(type='text' value='Default Output Structure Config')
 				.col-2.my-2: .row.justify-content-center
 					button#append.uie.btn.enabled.col Select
 			button#start.uie.btn.enabled.col.p-2 Start
@@ -53,7 +55,7 @@ body.dark
 		console.log('#{node_modules}');
 
 		function valueFormatter(x) {
-			return `<input value="${x}">`;
+			return (x!='[ ... ]')?`<input value="${x}">`:x;
 		}
 
-		require('../js/index.js')('#{arg}');
+		require('../js/index.js')(JSON.parse('#{arg}'.replace(/&quot;/g, '"')));
