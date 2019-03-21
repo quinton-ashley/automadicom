@@ -6,34 +6,38 @@ module.exports = async function(arg) {
 		systemPreferences
 	} = electron;
 
-	systemPreferences.subscribeNotification(
-		'AppleInterfaceThemeChangedNotification',
-		function theThemeHasChanged() {
-			if (systemPreferences.isDarkMode()) {
-				$('body').removeClass('light');
-				$('body').addClass('dark');
-			} else {
-				$('body').addClass('light');
-				$('body').removeClass('dark');
-			}
+	function themeChange(darkMode) {
+		darkMode = darkMode || systemPreferences.isDarkMode();
+		if (darkMode) {
+			$('body').removeClass('light');
+			$('body').addClass('dark');
+		} else {
+			$('body').addClass('light');
+			$('body').removeClass('dark');
 		}
-	)
+	}
+
+	systemPreferences.subscribeNotification(
+		'AppleInterfaceThemeChangedNotification', themeChange);
 
 	const bootstrapTable = require(__rootDir +
 		'/node_modules/bootstrap-table/dist/bootstrap-table.min.js');
-	// const bootstrapTable = require('bootstrap-table');
 	const automadicom = await require(__rootDir + '/core/automadicom.js');
 
 	async function select(asg, type) {
 		let x = dialog.select({
 			type: type
 		});
+		if (typeof x == 'undefined') return;
 		arg[asg] = x;
 		if (typeof x != 'string') {
 			x = x[0];
 		}
 		$('#' + asg + 'Path').val(x);
-		if (asg == 'input') await selectInput(x);
+		if (asg == 'input') {
+			await automadicom.setInput(x);
+			await loadFile(0);
+		}
 		return x;
 	}
 
@@ -49,11 +53,7 @@ module.exports = async function(arg) {
 			$('#' + cui.ui).show('blind');
 			$('#' + act).addClass('enabled');
 		}
-		if (act == 'inFile') {
-			await select('input', 'file');
-		} else if (act == 'inFiles') {
-			await select('input', 'files');
-		} else if (act == 'inDir') {
+		if (act == 'input') {
 			await select('input', 'dir');
 		} else if (act == 'rules') {
 			await select('rules', 'file');
@@ -70,8 +70,11 @@ module.exports = async function(arg) {
 		}
 	});
 
+	let flatTags = [];
+
+	// flatten tag object to conform to a single level for displaying
+	// tag data in the tag editor table
 	function flattenTags(meta, level, idBase) {
-		let flatTags = [];
 		if (!level) level = 0;
 		if (!idBase) idBase = '';
 		let i = 0;
@@ -92,11 +95,7 @@ module.exports = async function(arg) {
 			let sub;
 			if (typeof tag.Value[0] != 'object') {
 				if (tag.Value.length == 1) {
-					if (typeof tag.Value[0] == 'number') {
-						tag.value = tag.Value[0];
-					} else if (typeof tag.Value[0] == 'string') {
-						tag.value = '&quot;' + tag.Value[0] + '&quot;';
-					}
+					tag.value = tag.Value[0];
 				} else {
 					if (typeof tag.Value[0] == 'number') {
 						tag.value = '[' + tag.Value.toString() + ']';
@@ -116,14 +115,14 @@ module.exports = async function(arg) {
 				tag.value = '[ ... ]';
 				sub = tag.Value[0];
 			}
+			tag.edit = '';
 			delete tag.Value;
 			flatTags.push(tag);
 			if (sub) {
-				flatTags.concat(flattenTags(sub, level + 1, tag.pos));
+				flattenTags(sub, level + 1, tag.pos);
 			}
 			i++;
 		}
-		return flatTags;
 	}
 
 	cui.change('leftTab');
@@ -132,17 +131,24 @@ module.exports = async function(arg) {
 	});
 
 	await automadicom.setup();
+	let inFiles = await automadicom.setInput();
+	for (let i in inFiles) {
+		$('#loadFileSelection').append(pug(`button#inFile${i}.uie ${inFiles[i]}`));
+	}
+	await loadFile(0);
 
-	async function selectInput(x) {
+	async function loadFile(x) {
 		let tags = await automadicom.getTags(x);
-		let flatTags = [];
-		flatTags = flattenTags(tags);
+		flattenTags(tags);
 
-		$('#tagsTable').bootstrapTable({
+		let $table = $('#tagsTable');
+		$table.bootstrapTable({
 			data: flatTags
 		});
 		$('table.table').removeClass('table-bordered');
 		$('input.form-control').removeClass('form-control').addClass('p-2');
 		$('div.float-left.search').addClass('mt-0');
+		$table.bootstrapTable('hideColumn', 'pos');
+		$table.bootstrapTable('hideColumn', 'vr');
 	}
 }

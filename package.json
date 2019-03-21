@@ -137,7 +137,7 @@
     "v": "npm version patch --force",
     "version": "git add -A",
     "postversion": "git push",
-    "V": "git remote | xargs -L1 git push --all && git push --tags && npm publish"
+    "V": "git push origin $npm_package_version && npm publish"
   },
-  "version": "0.5.27"
+  "version": "0.5.28"
 }

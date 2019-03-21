@@ -1,3 +1,12 @@
+/*
+ * automadicom.js by Quinton Ashley for use at QTUltrasound
+ * Open Source MIT Licensed
+ */
+
+// TODO
+
+// StudyInstanceUID and SeriesInstanceUID
+
 const chalk = require('chalk'); // open source terminal text coloring library
 const CSV = require('csv-string'); // open source csv parser and stringifier
 const dcmtk = require(__rootDir + '/core/dcmtk.js'); // my nodejs dcmtk bindings library
@@ -15,7 +24,7 @@ let version = require(__rootDir + '/package.json').version;
 const usrDir = os.homedir() + '/Documents/automadicom';
 
 let inPath;
-let files; // input file paths
+let inFiles; // input file paths
 let fidx = 0; // the current file index
 
 let outDir;
@@ -49,19 +58,26 @@ class AutomaDicom {
 		this.dictID = await fs.readFile(__rootDir + '/db/dictID.json', 'utf8');
 		this.dictID = JSON.parse(this.dictID);
 
-		await this.setInput();
-		await this.setOutputDir();
-		await this.loadRulesFile();
-		await this.loadAppendFile();
+
+		await fs.ensureDir(usrDir + '/input');
+		await fs.ensureDir(usrDir + '/output');
+		await fs.ensureDir(usrDir + '/logs');
+		if (!(await fs.exists(usrDir + '/config'))) {
+			let files = await klaw(__rootDir + '/config');
+			for (let file of files) {
+				log(file.replace(__rootDir, usrDir));
+				await fs.copy(file, file.replace(__rootDir, usrDir));
+			}
+		}
 	}
 
 	async start(arg) {
-		if (!files) await this.setup();
+		if (!inFiles) await this.setup();
 
-		for (let i = 0; i < files.length; i++) {
-			if ((!(await fs.stat(files[i])).isDirectory()) &&
-				files[i].match(/^(.*\.dcm|.*\.\d+|.*(\/|\\)[^.]+)$/gmi) &&
-				!files[i].match(/dir/i)) {
+		for (let i = 0; i < inFiles.length; i++) {
+			if ((!(await fs.stat(inFiles[i])).isDirectory()) &&
+				inFiles[i].match(/^(.*\.dcm|.*\.\d+|.*(\/|\\)[^.]+)$/gmi) &&
+				!inFiles[i].match(/dir/i)) {
 
 				try {
 					await this.edit(i);
@@ -80,7 +96,7 @@ class AutomaDicom {
 		if (failed.length >= 1) {
 			er('failed for files:');
 			for (let fidx in failed) {
-				er(files[fidx]);
+				er(inFiles[fidx]);
 			}
 		} else {
 			log(chalk.green('100% success'));
@@ -92,7 +108,7 @@ class AutomaDicom {
 		if (input) {
 			inPath = input;
 		} else {
-			if (files) return;
+			if (inFiles) return;
 			inPath = arg.i || arg.input || usrDir + '/input';
 		}
 
@@ -107,19 +123,26 @@ class AutomaDicom {
 		if ((await fs.stat(inPath)).isDirectory()) {
 			// looks for files with no extensions, because sometimes DICOM files
 			// will be improperly named
-			files = await klaw(inPath);
+			let allFiles = await klaw(inPath);
+			inFiles = [];
+			for (let file of allFiles) {
+				if (path.parse(file).base[0] != '.' && !(await fs.stat(file)).isDirectory()) {
+					inFiles.push(file);
+				}
+			}
+
 			if (!arg.n && arg.c) {
 				await this.cleanEmptyFoldersRecursively(inPath);
 			}
 		} else {
-			files = [inPath];
+			inFiles = [inPath];
 		}
-		if (files === undefined || files.length == 0) {
+		if (inFiles === undefined || inFiles.length == 0) {
 			er('invalid path, no files found');
 			return;
 		}
-		log(files);
-		return files;
+		log(inFiles);
+		return inFiles;
 	}
 
 	async setOutputDir(output) {
@@ -230,10 +253,10 @@ class AutomaDicom {
 	// solve file arg ambivalence
 	_fileAmb(file) {
 		if (typeof file == 'string') {
-			fidx = files.indexOf(file);
+			fidx = inFiles.indexOf(file);
 		} else {
 			fidx = file;
-			file = files[fidx];
+			file = inFiles[fidx];
 		}
 		return file;
 	}
@@ -345,8 +368,8 @@ Times must be entered as a String in a standard format, ex:'HHMMSS'
 
 	results() {
 		let res = '';
-		for (let i = 0; i < files.length; i++) {
-			res += files[i] + '\n';
+		for (let i = 0; i < inFiles.length; i++) {
+			res += inFiles[i] + '\n';
 			res += ((outPaths[i]) ? outPaths[i] : 'failed') + '\n';
 		}
 		let resTree = render(outPaths.filter((outPath) => {
@@ -363,18 +386,18 @@ Times must be entered as a String in a standard format, ex:'HHMMSS'
 		if (!(await fs.stat(folder)).isDirectory()) {
 			return 1;
 		}
-		let files = await klaw(folder);
-		if (files.length >= 1) {
-			for (file in files) {
+		let inFiles = await klaw(folder);
+		if (inFiles.length >= 1) {
+			for (file in inFiles) {
 				let fullPath = folder + '/' + file;
 				await cleanEmptyFoldersRecursively(fullPath);
 			}
-			files = await klaw(folder);
+			inFiles = await klaw(folder);
 		}
-		if (files.length <= 1) {
-			if (files[0] == '.DS_Store') {
-				await fs.unlink(folder + '/' + files[0]);
-			} else if (files.length == 1) {
+		if (inFiles.length <= 1) {
+			if (inFiles[0] == '.DS_Store') {
+				await fs.unlink(folder + '/' + inFiles[0]);
+			} else if (inFiles.length == 1) {
 				return;
 			}
 			await fs.rmdir(folder);

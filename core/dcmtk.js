@@ -1,3 +1,8 @@
+/*
+ * dcmtk.js by Quinton Ashley
+ * Open Source MIT Licensed
+ */
+
 const child = require('child_process').spawn;
 const dcm2json = `${__rootDir}/dcmtk/${osType}/dcm2json${((mac)?'':'.exe')}`;
 const dcmodify = `${__rootDir}/dcmtk/${osType}/dcmodify{((mac)?'':'.exe')}`;

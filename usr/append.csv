@@ -1,3 +1,0 @@
-$PatientID.trim()
-$StudyDate.trim()
-file.base
