@@ -3,7 +3,7 @@
 (async function() {
 	const log = console.log;
 	let arg = require('minimist')(process.argv.slice(2));
-	arg.__rootDir = __dirname;
+	arg.__rootDir = __dirname.replace(/\\/g, '/');
 	if (arg.i || arg.h) {
 		await require('./core/setup.js')(arg);
 		await require('./core/automadicom.js').start(arg);
@@ -29,7 +29,7 @@
 		try {
 			const locals = {
 				arg: JSON.stringify(arg),
-				node_modules: path.join(__dirname, 'node_modules').replace(/\\/g, '/')
+				node_modules: path.join(arg.__rootDir, 'node_modules').replace(/\\/g, '/')
 			};
 			log(locals);
 			let pug = await setupPug({

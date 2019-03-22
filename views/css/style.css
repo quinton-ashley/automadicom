@@ -9,6 +9,9 @@ html {
 	width: 100%;
 	margin: 0;
 	padding: 0;
+	color: #777;
+	background-color: #000;
+	font-size: 16px;
 }
 
 .titlebar {
@@ -36,12 +39,6 @@ html {
 
 .hiddenRow {
 	padding: 0 !important;
-}
-
-body {
-	color: #818c46;
-	background-color: #000;
-	font-size: 20px;
 }
 
 #inputOptions {
@@ -77,27 +74,27 @@ div.progress-bar {
 }
 
 .btn {
-	background-color: #444;
+	background-color: #818c46;
 }
 
-.btn.enabled {
-	background-color: #818c46;
+.btn.disabled {
+	background-color: #444;
 }
 
 .tab {
 	border-radius: 15px 15px 0 0;
 	background-color: #000!important;
-	color: #777;
-	border-top: #777 6px solid !important;
+	color: #818c46;
+	border-top: #818c46 6px solid !important;
 	margin-top: 5px;
 	margin-left: 5px;
 	margin-right: 5px;
 	padding: 5px;
 }
 
-.tab.enabled {
-	color: #818c46;
-	border-top: #818c46 6px solid !important;
+.tab.disabled {
+	color: #777;
+	border-top: #777 6px solid !important;
 }
 
 .tab:hover {
@@ -106,11 +103,6 @@ div.progress-bar {
 
 .text-align-center {
 	text-align: center;
-}
-
-a,
-a:hover {
-	color: #818c46;
 }
 
 .nav-link small {
@@ -126,14 +118,27 @@ a:hover {
 	border-width: 1px;
 	border-style: solid;
 	border-color: transparent;
-	font-size: 20px;
+	font-size: 16px;
 	font-weight: bold;
 }
 
 .uie:hover {
 	filter: brightness(1.2);
-	border-top-color: #818c46;
-	border-bottom-color: #818c46;
+}
+
+.uie.disabled,
+.uie.link.disabled {
+	color: #777;
+}
+
+.uie.link {
+	color: #818c46;
+}
+
+.uie.link.cursor {
+	border: #818c46 1px solid;
+	border-left: 0;
+	border-right: 0;
 }
 
 .td-has-input {
@@ -141,7 +146,7 @@ a:hover {
 }
 
 td input {
-	font-size: 20px;
+	font-size: 16px;
 	border-width: 0;
 }
 
@@ -171,4 +176,9 @@ body {
 
 span.card-view-value {
 	display: inline-block;
+}
+
+#loadInFiles .uie {
+	word-break: break-all;
+	text-align: left;
 }

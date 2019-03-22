@@ -21,9 +21,10 @@ const er = (ror) => {
 }
 
 let version = require(__rootDir + '/package.json').version;
-const usrDir = os.homedir() + '/Documents/automadicom';
+let usrDir = os.homedir() + '/Documents/automadicom';
+if (win) usrDir = path.nx(usrDir);
 
-let inPath;
+let inDir;
 let inFiles; // input file paths
 let fidx = 0; // the current file index
 
@@ -65,8 +66,9 @@ class AutomaDicom {
 		if (!(await fs.exists(usrDir + '/config'))) {
 			let files = await klaw(__rootDir + '/config');
 			for (let file of files) {
-				log(file.replace(__rootDir, usrDir));
-				await fs.copy(file, file.replace(__rootDir, usrDir));
+				log(__rootDir);
+				log(usrDir);
+				await fs.copy(file, usrDir + '/' + path.relative(__rootDir, file));
 			}
 		}
 	}
@@ -104,38 +106,42 @@ class AutomaDicom {
 		await fs.outputFile(usrDir + '/logs/' + new Date().toString() + '.txt', results());
 	}
 
+	getInputDir() {
+		return inDir;
+	}
+
 	async setInput(input) {
 		if (input) {
-			inPath = input;
+			inDir = input;
 		} else {
 			if (inFiles) return;
-			inPath = arg.i || arg.input || usrDir + '/input';
+			inDir = arg.i || arg.input || usrDir + '/input';
 		}
 
 		log('');
-		log('input: ' + inPath + '\n');
-		if (!(await fs.exists(inPath))) {
+		log('input: ' + inDir + '\n');
+		if (!(await fs.exists(inDir))) {
 			er('Input path does not exist!');
 			return;
 		}
 		// if the input path is a directory send it straight to the setup function
 		// else glob for leaves of the fs
-		if ((await fs.stat(inPath)).isDirectory()) {
+		if ((await fs.stat(inDir)).isDirectory()) {
 			// looks for files with no extensions, because sometimes DICOM files
 			// will be improperly named
-			let allFiles = await klaw(inPath);
+			let allFiles = await klaw(inDir);
 			inFiles = [];
 			for (let file of allFiles) {
 				if (path.parse(file).base[0] != '.' && !(await fs.stat(file)).isDirectory()) {
-					inFiles.push(file);
+					inFiles.push(path.nx(file));
 				}
 			}
 
 			if (!arg.n && arg.c) {
-				await this.cleanEmptyFoldersRecursively(inPath);
+				await this.cleanEmptyFoldersRecursively(inDir);
 			}
 		} else {
-			inFiles = [inPath];
+			inFiles = [inDir];
 		}
 		if (inFiles === undefined || inFiles.length == 0) {
 			er('invalid path, no files found');
@@ -425,7 +431,7 @@ Times must be entered as a String in a standard format, ex:'HHMMSS'
 	// 				}
 	// 				dirs.push(tmp);
 	// 				log(dirs);
-	// 				let outPath = strSim.findBestMatch(path.parse(file).dir.slice(inPath.length), dirs).bestMatch.target + '/' + base;
+	// 				let outPath = strSim.findBestMatch(path.parse(file).dir.slice(inDir.length), dirs).bestMatch.target + '/' + base;
 	// 				log('writing: ' + outPath + '\n');
 	// 				await fs.copy(file, outPath);
 	// 				outPaths[i] = outPath;

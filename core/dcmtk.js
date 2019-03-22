@@ -4,8 +4,8 @@
  */
 
 const child = require('child_process').spawn;
-const dcm2json = `${__rootDir}/dcmtk/${osType}/dcm2json${((mac)?'':'.exe')}`;
-const dcmodify = `${__rootDir}/dcmtk/${osType}/dcmodify{((mac)?'':'.exe')}`;
+const dcm2json = `${__rootDir}/dcmtk/${osType}/dcm2json${((win)?'.exe':'')}`;
+const dcmodify = `${__rootDir}/dcmtk/${osType}/dcmodify${((win)?'.exe':'')}`;
 
 
 let dictID;
@@ -31,7 +31,7 @@ class DCMTK {
 
 			cmd.stdout.on('data', (data) => {
 				data = data.toString();
-				if (data.includes('"7fe00010"')) {
+				if (data.match(/,\s*"7fe00010"/)) {
 					data = data.split(/,\s*"7fe00010"/)[0];
 					str += data + '}';
 					cmd.kill('SIGINT');

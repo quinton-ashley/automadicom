@@ -45,6 +45,10 @@ module.exports = async function(arg) {
 		return this.substr(0, index) + insert + this.substr(index);
 	}
 
+	path.nx = (file) => {
+		return file.replace(/\\/g, '/');
+	};
+
 	if (!arg.electron) {
 		return;
 	}

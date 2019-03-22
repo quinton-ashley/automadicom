@@ -5,6 +5,12 @@ module.exports = async function(arg) {
 	const {
 		systemPreferences
 	} = electron;
+	const bootstrapTable = require(__rootDir +
+		'/node_modules/bootstrap-table/dist/bootstrap-table.min.js');
+	const automadicom = await require(__rootDir + '/core/automadicom.js');
+
+	let inFiles;
+	let infidx;
 
 	function themeChange(darkMode) {
 		darkMode = darkMode || systemPreferences.isDarkMode();
@@ -16,13 +22,10 @@ module.exports = async function(arg) {
 			$('body').removeClass('dark');
 		}
 	}
-
-	systemPreferences.subscribeNotification(
-		'AppleInterfaceThemeChangedNotification', themeChange);
-
-	const bootstrapTable = require(__rootDir +
-		'/node_modules/bootstrap-table/dist/bootstrap-table.min.js');
-	const automadicom = await require(__rootDir + '/core/automadicom.js');
+	if (mac) {
+		systemPreferences.subscribeNotification(
+			'AppleInterfaceThemeChangedNotification', themeChange);
+	}
 
 	async function select(asg, type) {
 		let x = dialog.select({
@@ -35,23 +38,25 @@ module.exports = async function(arg) {
 		}
 		$('#' + asg + 'Path').val(x);
 		if (asg == 'input') {
-			await automadicom.setInput(x);
-			await loadFile(0);
+			await selectInput(x);
 		}
 		return x;
 	}
 
-	cui.setUIOnChange((state, subState, gamepadConnected) => {});
+	cui.setUIOnChange((state, subState, gamepadConnected) => {
+		if (state.includes('Tab')) {
+			$('#' + cui.ui + 'Toggle').addClass('disabled');
+			$('#' + cui.ui).hide();
+			$('#' + state).show();
+			$('#' + state + 'Toggle').removeClass('disabled');
+		}
+	});
 
 	cui.setCustomActions(async function(act, isBtn) {
 		log(act);
 		let ui = cui.ui;
 		if (act.includes('Toggle')) {
-			$('#' + ui + 'Toggle').removeClass('enabled');
-			$('#' + ui).hide('blind');
 			cui.change(act.slice(0, -6));
-			$('#' + cui.ui).show('blind');
-			$('#' + act).addClass('enabled');
 		}
 		if (act == 'input') {
 			await select('input', 'dir');
@@ -67,6 +72,9 @@ module.exports = async function(arg) {
 		}
 		if (act == 'quit') {
 			app.exit();
+		}
+		if (act.includes('inFile')) {
+			await loadFile(Number(act.slice(-1)));
 		}
 	});
 
@@ -104,7 +112,8 @@ module.exports = async function(arg) {
 						for (let i in tag.Value) {
 							if (!tag.Value[i]) break;
 							if (i != 0) tag.value += ',';
-							tag.value += '&quot;' + tag.Value[i] + '&quot;';
+							// tag.value += '&quot;' + tag.Value[i] + '&quot;';
+							tag.value += tag.Value[i];
 						}
 						tag.value += ']';
 					}
@@ -131,13 +140,50 @@ module.exports = async function(arg) {
 	});
 
 	await automadicom.setup();
-	let inFiles = await automadicom.setInput();
-	for (let i in inFiles) {
-		$('#loadFileSelection').append(pug(`button#inFile${i}.uie ${inFiles[i]}`));
-	}
-	await loadFile(0);
+	await selectInput();
 
-	async function loadFile(x) {
+	async function selectInput(inDir) {
+		inFiles = await automadicom.setInput(inDir);
+		infidx = 0;
+		printPaths(inFiles);
+		cui.addView('loadInFiles');
+		await loadFile(0, true);
+	}
+
+	function printPaths(files) {
+		let res = {};
+		for (let file of files) {
+			file = path.relative(automadicom.getInputDir(), file);
+			file = path.nx(file);
+			file.split('/').reduce((o, k) => o[k] = o[k] || {}, res);
+		}
+		log(res);
+		$('#loadInFiles .row').empty();
+		_printPaths(res, 0);
+	}
+
+	function _printPaths(files, level) {
+		for (let i in files) {
+			if ($.isEmptyObject(files[i])) {
+				let x = pug(`#inFile${infidx++}.uie.link.disabled ` + '/ '.repeat(level) + i);
+				$('#loadInFiles .row').append(x);
+			} else {
+				let x = pug('div ' + '/ '.repeat(level) + i);
+				$('#loadInFiles .row').append(x);
+				_printPaths(files[i], level + 1);
+			}
+			if (i >= 20) {
+				$('#loadInFiles .row').append(pug('p ...'));
+				break;
+			}
+		}
+	}
+
+	async function loadFile(x, noTabSwitch) {
+		$('#inFile' + infidx).addClass('disabled');
+		$('#inFile' + x).removeClass('disabled');
+		infidx = x;
+		log(x);
 		let tags = await automadicom.getTags(x);
 		flattenTags(tags);
 
@@ -150,5 +196,8 @@ module.exports = async function(arg) {
 		$('div.float-left.search').addClass('mt-0');
 		$table.bootstrapTable('hideColumn', 'pos');
 		$table.bootstrapTable('hideColumn', 'vr');
+		if (!noTabSwitch) {
+			cui.change('midTab');
+		}
 	}
 }
