@@ -5,12 +5,14 @@
 
 // TODO
 
+// button on input screen
 // StudyInstanceUID and SeriesInstanceUID
+
+// PatientID PatientName StudyDate Modality Laterality
 
 const chalk = require('chalk'); // open source terminal text coloring library
 const CSV = require('csv-string'); // open source csv parser and stringifier
 const dcmtk = require(__rootDir + '/core/dcmtk.js'); // my nodejs dcmtk bindings library
-const flatten = require('flat');
 const strSim = require('string-similarity'); // open source string similarity algorithm
 const {
 	render

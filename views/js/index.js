@@ -55,9 +55,6 @@ module.exports = async function(arg) {
 	cui.setCustomActions(async function(act, isBtn) {
 		log(act);
 		let ui = cui.ui;
-		if (act.includes('Toggle')) {
-			cui.change(act.slice(0, -6));
-		}
 		if (act == 'input') {
 			await select('input', 'dir');
 		} else if (act == 'rules') {
@@ -69,6 +66,8 @@ module.exports = async function(arg) {
 		} else if (act == 'start') {
 			log(arg);
 			automadicom.start();
+		} else if (act == 'back') {
+			cui.change('leftTab');
 		}
 		if (act == 'quit') {
 			app.exit();
@@ -78,7 +77,7 @@ module.exports = async function(arg) {
 		}
 	});
 
-	let flatTags = [];
+	let tags = [];
 
 	// flatten tag object to conform to a single level for displaying
 	// tag data in the tag editor table
@@ -126,7 +125,7 @@ module.exports = async function(arg) {
 			}
 			tag.edit = '';
 			delete tag.Value;
-			flatTags.push(tag);
+			tags.push(tag);
 			if (sub) {
 				flattenTags(sub, level + 1, tag.pos);
 			}
@@ -139,58 +138,61 @@ module.exports = async function(arg) {
 		v: true
 	});
 
+	let tagsArr = [];
+
 	await automadicom.setup();
 	await selectInput();
 
 	async function selectInput(inDir) {
 		inFiles = await automadicom.setInput(inDir);
 		infidx = 0;
+
+		for (let file of inFiles) {
+			tags = [];
+			let meta = await automadicom.getTags(file);
+			flattenTags(meta);
+			tagsArr.push(tags);
+		}
+
 		printPaths(inFiles);
 		cui.addView('loadInFiles');
 		await loadFile(0, true);
 	}
 
-	function printPaths(files) {
-		let res = {};
-		for (let file of files) {
-			file = path.relative(automadicom.getInputDir(), file);
-			file = path.nx(file);
-			file.split('/').reduce((o, k) => o[k] = o[k] || {}, res);
-		}
-		log(res);
-		$('#loadInFiles .row').empty();
-		_printPaths(res, 0);
+	function getTag(name) {
+		return (tags.find(x => x.name === name) || {}).value || name;
 	}
 
-	function _printPaths(files, level) {
+	function printPaths(files, level) {
+		level = level || 0;
 		for (let i in files) {
-			if ($.isEmptyObject(files[i])) {
-				let x = pug(`#inFile${infidx++}.uie.link.disabled ` + '/ '.repeat(level) + i);
-				$('#loadInFiles .row').append(x);
-			} else {
-				let x = pug('div ' + '/ '.repeat(level) + i);
-				$('#loadInFiles .row').append(x);
-				_printPaths(files[i], level + 1);
+			tags = tagsArr[i];
+			let elem = `#inFile${infidx++}.uie.link.disabled `;
+			elem += '/ '.repeat(level);
+			let names = ['PatientName', 'PatientID', 'StudyDate', 'Modality', 'Laterality'];
+			for (let name of names) {
+				elem += getTag(name) + ' ';
 			}
+			elem = pug(elem);
+			$('#loadInFiles').append(elem);
+
 			if (i >= 20) {
-				$('#loadInFiles .row').append(pug('p ...'));
+				$('#loadInFiles').append(pug('p ...'));
 				break;
 			}
 		}
 	}
 
-	async function loadFile(x, noTabSwitch) {
+	async function loadFile(inputFileIndex, noTabSwitch) {
 		$('#inFile' + infidx).addClass('disabled');
-		$('#inFile' + x).removeClass('disabled');
-		infidx = x;
-		log(x);
-		let tags = await automadicom.getTags(x);
-		flattenTags(tags);
+		$('#inFile' + inputFileIndex).removeClass('disabled');
+		infidx = inputFileIndex;
+		log(infidx);
+		tags = tagsArr[infidx];
 
 		let $table = $('#tagsTable');
-		$table.bootstrapTable({
-			data: flatTags
-		});
+		$table.bootstrapTable();
+		$table.bootstrapTable('load', tags);
 		$('table.table').removeClass('table-bordered');
 		$('input.form-control').removeClass('form-control').addClass('p-2');
 		$('div.float-left.search').addClass('mt-0');
@@ -200,4 +202,35 @@ module.exports = async function(arg) {
 			cui.change('midTab');
 		}
 	}
+
+	// function printPaths(files) {
+	// 	let res = {};
+	// 	for (let file of files) {
+	// 		file = path.relative(automadicom.getInputDir(), file);
+	// 		file = path.nx(file);
+	// 		file.split('/').reduce((o, k) => o[k] = o[k] || {}, res);
+	// 	}
+	// 	log(res);
+	// 	$('#loadInFiles').empty();
+	// 	_printPaths(res, 0);
+	// }
+	//
+	// function _printPaths(files, level) {
+	// 	for (let i in files) {
+	// 		if ($.isEmptyObject(files[i])) {
+	// 			let x = pug(`#inFile${infidx++}.uie.link.disabled ` + '/ '.repeat(level) + i);
+	// 			$('#loadInFiles').append(x);
+	// 		} else {
+	// 			let x = pug('div ' + '/ '.repeat(level) + i);
+	// 			$('#loadInFiles').append(x);
+	// 			_printPaths(files[i], level + 1);
+	// 		}
+	// 		if (i >= 20) {
+	// 			$('#loadInFiles').append(pug('p ...'));
+	// 			break;
+	// 		}
+	// 	}
+	// }
+
+	// $(this).parent().find('input').is(':checked')
 }

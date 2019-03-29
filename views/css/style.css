@@ -4,14 +4,21 @@
 	}
 }
 
-body,
-html {
+body {
 	width: 100%;
 	margin: 0;
 	padding: 0;
+	font-size: 16px;
+}
+
+body.dark {
 	color: #777;
 	background-color: #000;
-	font-size: 16px;
+}
+
+body.light {
+	background-color: #ddd;
+	color: #111;
 }
 
 .titlebar {
@@ -20,9 +27,7 @@ html {
 	height: 10px;
 }
 
-.dark .window-button {
-	background-color: #777;
-	border-color: #444;
+.window-button {
 	border-width: 1px;
 	border-radius: 10px;
 	width: 10px;
@@ -30,6 +35,11 @@ html {
 	margin: 0;
 	padding: 0;
 	display: block;
+}
+
+.dark .window-button {
+	background-color: #777;
+	border-color: #444;
 }
 
 .selected {
@@ -45,15 +55,15 @@ html {
 	display: none;
 }
 
-form,
-input,
-nav,
-table,
-tbody,
-td,
-textarea,
-th,
-tr {
+.dark form,
+.dark input,
+.dark nav,
+.dark table,
+.dark tbody,
+.dark td,
+.dark textarea,
+.dark th,
+.dark tr {
 	background-color: #000!important;
 	color: #eee;
 }
@@ -73,12 +83,42 @@ div.progress-bar {
 	box-shadow: none;
 }
 
-.btn {
+.tog {
+	border-radius: 0.25rem;
+}
+
+.btn,
+.tog {
 	background-color: #818c46;
 }
 
-.btn.disabled {
+.light .btn,
+.light .tog {
+	color: #eee;
+}
+
+.btn.disabled,
+.tog.disabled {
 	background-color: #444;
+}
+
+.light .btn.disabled {
+	background-color: #000;
+}
+
+.light .tog.disabled {
+	color: #777;
+	background-color: #444;
+}
+
+.tog-l {
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+}
+
+.tog-r {
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
 }
 
 .tab {
@@ -120,6 +160,10 @@ div.progress-bar {
 	border-color: transparent;
 	font-size: 16px;
 	font-weight: bold;
+}
+
+.tbar {
+	background-color: transparent;
 }
 
 .uie:hover {
@@ -181,4 +225,26 @@ span.card-view-value {
 #loadInFiles .uie {
 	word-break: break-all;
 	text-align: left;
+}
+
+#nav-bottom {
+	background-color: #ddd;
+}
+
+.form-check-input {
+	margin-top: 0.09em;
+}
+
+input.uneditable {
+	background-color: #ddd;
+}
+
+h1 {
+	text-align: center;
+}
+
+#back {
+	text-align: left;
+	margin: 0;
+	padding: 0;
 }

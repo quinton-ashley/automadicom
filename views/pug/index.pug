@@ -1,59 +1,79 @@
 doctype html
 html
-  head
-    title automadicom
-    meta(charset='utf-8')
-    link(rel='stylesheet' type='text/css' href=node_modules + '/bootstrap/dist/css/bootstrap.min.css')
-    link(rel='stylesheet' type='text/css' href=node_modules + '/bootstrap-table/dist/bootstrap-table.min.css')
-    link(rel='stylesheet' type='text/css' href=node_modules + '/contro-ui/dist/css/contro-ui.css')
-    link(rel='stylesheet' type='text/css' href='../css/style.css')
+	head
+		title automadicom
+		meta(charset='utf-8')
+		link(rel='stylesheet' type='text/css' href=node_modules + '/bootstrap/dist/css/bootstrap.min.css')
+		link(rel='stylesheet' type='text/css' href=node_modules + '/bootstrap-table/dist/bootstrap-table.min.css')
+		link(rel='stylesheet' type='text/css' href=node_modules + '/contro-ui/dist/css/contro-ui.css')
+		link(rel='stylesheet' type='text/css' href='../css/style.css')
+		link(rel='stylesheet' type='text/css' href=node_modules + '/material-design-icons-iconfont/dist/material-design-icons.css')
 
-body.dark
-  .container-fluid.p-0.h-100: .row.justify-content-center.m-0.h-100
-    #tabToggles.col-12: .row
-      button#leftTabToggle.uie.tab.col Input
-      button#midTabToggle.uie.tab.col.disabled Tag Editor
-      button#rightTabToggle.uie.tab.col.disabled Output
-    #leftTab.col.p-0.collapse.show
-      #inputRow.col-12: .row
-        .col-10.my-2.pr-2.pl-0
-          input#inputPath.p-2(type='text' value='~/Documents/automadicom/input')
-        .col-2.my-2: .row.justify-content-center
-          button#input.uie.btn.col Select
-      #loadInFiles.col-12.mt-3: .row.row-y
-    #midTab.col.p-0.collapse
-      #rulesRow.col-12: .row
-        .col-10.my-2.pr-2.pl-0
-          input#rulesPath.p-2(type='text' value='Default Edit Config')
-        .col-2.my-2: .row.justify-content-center
-          button#rules.uie.btn.col Select
-      table#tagsTable.table.table-dark(data-search="true" data-search-align="left" data-id-field="id" data-sort-name="id")
-        thead: tr
-          th(data-field="pos" data-sortable="true") #
-          th(data-field="id" data-sortable="true") ID
-          th(data-field="vr" data-sortable="true") VR
-          th(data-field="name" data-sortable="true") Name
-          th(data-field="value" data-sortable="true" data-formatter="valueFormatter") Current Value
-          th(data-field="edit" data-sortable="true" data-formatter="valueFormatter") New Value
-        tbody#tags.border-top-0.border-bottom-0
-    #rightTab.col.p-0.collapse
-      #outputRow.col-12: .row
-        .col-10.my-2.pr-2.pl-0
-          input#outputPath.p-2(type='text' value='~/Documents/automadicom/output')
-        .col-2.my-2: .row.justify-content-center
-          button#output.uie.btn.col Select
-      #appendRow.col-12: .row
-        .col-10.my-2.pr-2.pl-0
-          input#appendPath.p-2(type='text' value='Default Output Structure Config')
-        .col-2.my-2: .row.justify-content-center
-          button#append.uie.btn.col Select
-      button#start.uie.btn.col.p-2 Start
-  script.
-    console.log('opening index.pug');
-    console.log('#{node_modules}');
+body.light
+	.container-fluid: .row.justify-content-center.p-2
+		#leftTab
+			.col-12.collapse.show
+				.row: .col-12.p-0: h1.mb-0.pb-0 automadicom
+				#inputRow.row
+					.col-10.my-2.pr-2.pl-0
+						input#inputPath.p-2(type='text' value='~/Documents/automadicom/input')
+					.col-2.my-2: .row.justify-content-center
+						button#input.uie.btn.col Select
+				#loadInFiles.mt-3.row.row-y
+			.col-12.fixed-bottom.px-4
+				.row.p-2
+					.col-4.form-check
+						input#exampleCheck1.form-check-input(type='checkbox')
+						label.form-check-label(for='exampleCheck1') Anonymize Patient Data
+					.col-4.form-check
+						input#exampleCheck1.form-check-input(type='checkbox')
+						label.form-check-label(for='exampleCheck1') Anonymize Institution Data
+					.col-4.form-check
+						input#exampleCheck1.form-check-input(type='checkbox')
+						label.form-check-label(for='exampleCheck1') Generate New UIDs
+					.col-4.form-check
+						input#exampleCheck1.form-check-input(type='checkbox')
+						label.form-check-label(for='exampleCheck1') Remove Descriptions
+					.col-4.form-check
+						input#exampleCheck1.form-check-input(type='checkbox')
+						label.form-check-label(for='exampleCheck1') Remove Clinical Data
+					.col-4.form-check
+						input#exampleCheck1.form-check-input(type='checkbox')
+						label.form-check-label(for='exampleCheck1') Hierachical Output Folders
+				.row.pb-2
+					//- .col-4.p-0: button#viewAllTags.uie.tog.tog-l.disabled.p-1 Show All Tags
+					//- .col-4.p-0.pr-1: button#viewChanges.uie.tog.tog-r.p-1 Preview Changes Only
+					.col.p-0.px-1: button#changes.uie.btn.p-1 Preview Changes
+					.col.p-0.pl-1: button#start.uie.btn.p-1 Start
+		#midTab.col-12.collapse
+			.row
+				.col-1: button#back.uie.tbar: i.material-icons arrow_back_ios
+				.col-10.p-0: h1 Preview Changes
+				.col-1
+			.row: .col-12.p-0: table#tagsTable.table(data-search="true" data-search-align="left" data-id-field="id" data-sort-name="id")
+				thead: tr
+					th(data-field="pos" data-sortable="true") #
+					th(data-field="id" data-sortable="true") ID
+					th(data-field="vr" data-sortable="true") VR
+					th(data-field="name" data-sortable="true") Name
+					th(data-field="value" data-sortable="true" data-formatter="uneditableFormatter") Current Value
+					th(data-field="edit" data-sortable="true" data-formatter="editableFormatter") New Value
+				tbody#tags.border-top-0.border-bottom-0
 
-    function valueFormatter(x) {
-      return (x!='[ ... ]')?`<input value="${x}">`:x;
-    }
+	script.
+		console.log('opening index.pug');
+		console.log('#{node_modules}');
 
-    require('../js/index.js')(JSON.parse('#{arg}'.replace(/&quot;/g, '"')));
+		function uneditableFormatter(x) {
+			return inputFormatter(x, 'uneditable');
+		}
+
+		function editableFormatter(x) {
+			return inputFormatter(x, '');
+		}
+
+		function inputFormatter(x, uneditable) {
+			return (x!='[ ... ]')?`<input class="${uneditable}" value="${x}" ${(uneditable)?'readonly':''}>`:x;
+		}
+
+		require('../js/index.js')(JSON.parse('#{arg}'.replace(/&quot;/g, '"')));

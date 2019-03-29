@@ -1,0 +1,59 @@
+doctype html
+html
+  head
+    title automadicom
+    meta(charset='utf-8')
+    link(rel='stylesheet' type='text/css' href=node_modules + '/bootstrap/dist/css/bootstrap.min.css')
+    link(rel='stylesheet' type='text/css' href=node_modules + '/bootstrap-table/dist/bootstrap-table.min.css')
+    link(rel='stylesheet' type='text/css' href=node_modules + '/contro-ui/dist/css/contro-ui.css')
+    link(rel='stylesheet' type='text/css' href='../css/style.css')
+
+body.dark
+  .container-fluid.p-0.h-100: .row.justify-content-center.m-0.h-100
+    #tabToggles.col-12: .row
+      button#leftTabToggle.uie.tab.col Input
+      button#midTabToggle.uie.tab.col.disabled Tag Editor
+      button#rightTabToggle.uie.tab.col.disabled Output
+    #leftTab.col.p-0.collapse.show
+      #inputRow.col-12: .row
+        .col-10.my-2.pr-2.pl-0
+          input#inputPath.p-2(type='text' value='~/Documents/automadicom/input')
+        .col-2.my-2: .row.justify-content-center
+          button#input.uie.btn.col Select
+      #loadInFiles.col-12.mt-3: .row.row-y
+    #midTab.col.p-0.collapse
+      #rulesRow.col-12: .row
+        .col-10.my-2.pr-2.pl-0
+          input#rulesPath.p-2(type='text' value='Default Edit Config')
+        .col-2.my-2: .row.justify-content-center
+          button#rules.uie.btn.col Select
+      table#tagsTable.table.table-dark(data-search="true" data-search-align="left" data-id-field="id" data-sort-name="id")
+        thead: tr
+          th(data-field="pos" data-sortable="true") #
+          th(data-field="id" data-sortable="true") ID
+          th(data-field="vr" data-sortable="true") VR
+          th(data-field="name" data-sortable="true") Name
+          th(data-field="value" data-sortable="true" data-formatter="valueFormatter") Current Value
+          th(data-field="edit" data-sortable="true" data-formatter="valueFormatter") New Value
+        tbody#tags.border-top-0.border-bottom-0
+    #rightTab.col.p-0.collapse
+      #outputRow.col-12: .row
+        .col-10.my-2.pr-2.pl-0
+          input#outputPath.p-2(type='text' value='~/Documents/automadicom/output')
+        .col-2.my-2: .row.justify-content-center
+          button#output.uie.btn.col Select
+      #appendRow.col-12: .row
+        .col-10.my-2.pr-2.pl-0
+          input#appendPath.p-2(type='text' value='Default Output Structure Config')
+        .col-2.my-2: .row.justify-content-center
+          button#append.uie.btn.col Select
+      button#start.uie.btn.col.p-2 Start
+  script.
+    console.log('opening index.pug');
+    console.log('#{node_modules}');
+
+    function valueFormatter(x) {
+      return (x!='[ ... ]')?`<input value="${x}">`:x;
+    }
+
+    require('../js/index.js')(JSON.parse('#{arg}'.replace(/&quot;/g, '"')));
