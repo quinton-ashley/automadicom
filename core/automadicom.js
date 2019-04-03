@@ -10,6 +10,8 @@
 
 // PatientID PatientName StudyDate Modality Laterality
 
+// replace instead of remove
+
 const chalk = require('chalk'); // open source terminal text coloring library
 const CSV = require('csv-string'); // open source csv parser and stringifier
 const dcmtk = require(__rootDir + '/core/dcmtk.js'); // my nodejs dcmtk bindings library

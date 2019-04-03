@@ -19,7 +19,16 @@ body.light
 						input#inputPath.p-2(type='text' value='~/Documents/automadicom/input')
 					.col-2.my-2: .row.justify-content-center
 						button#input.uie.btn.col Select
-				#loadInFiles.mt-3.row.row-y
+				.row: .col-12.p-0: table#inputFilesTable.table(data-search="true" data-search-align="left" data-id-field="id" data-sort-name="id" data-single-select="true" data-click-to-select="true")
+					thead: tr
+						th(data-field="Index" data-sortable="true") #
+						th(data-field="PatientName" data-sortable="true") PatientName
+						th(data-field="PatientID" data-sortable="true") PatientID
+						th(data-field="StudyDate" data-sortable="true") StudyDate
+						th(data-field="Modality" data-sortable="true") Modality
+						th(data-field="Laterality" data-sortable="true") Laterality
+						th(data-field="Index" data-sortable="false" data-formatter="previewFormatter") Preview Changes
+					tbody#tags.border-top-0.border-bottom-0
 			.col-12.fixed-bottom.px-4
 				.row.p-2
 					.col-4.form-check
@@ -43,7 +52,7 @@ body.light
 				.row.pb-2
 					//- .col-4.p-0: button#viewAllTags.uie.tog.tog-l.disabled.p-1 Show All Tags
 					//- .col-4.p-0.pr-1: button#viewChanges.uie.tog.tog-r.p-1 Preview Changes Only
-					.col.p-0.px-1: button#changes.uie.btn.p-1 Preview Changes
+					.col.p-0.px-1: button#adv.uie.btn.p-1 Anonymization Options
 					.col.p-0.pl-1: button#start.uie.btn.p-1 Start
 		#midTab.col-12.collapse
 			.row
@@ -57,12 +66,16 @@ body.light
 					th(data-field="vr" data-sortable="true") VR
 					th(data-field="name" data-sortable="true") Name
 					th(data-field="value" data-sortable="true" data-formatter="uneditableFormatter") Current Value
-					th(data-field="edit" data-sortable="true" data-formatter="editableFormatter") New Value
+					th(data-field="edit" data-sortable="true" data-formatter="uneditableFormatter") New Value
 				tbody#tags.border-top-0.border-bottom-0
 
 	script.
 		console.log('opening index.pug');
 		console.log('#{node_modules}');
+
+		function previewFormatter(x) {
+			return `<button id="inFile${x}" class="uie link">View Tags</button>`;
+		}
 
 		function uneditableFormatter(x) {
 			return inputFormatter(x, 'uneditable');

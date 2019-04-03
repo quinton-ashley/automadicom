@@ -153,9 +153,8 @@ module.exports = async function(arg) {
 			flattenTags(meta);
 			tagsArr.push(tags);
 		}
-
 		printPaths(inFiles);
-		cui.addView('loadInFiles');
+		cui.addView('inputFilesTable');
 		await loadFile(0, true);
 	}
 
@@ -165,22 +164,24 @@ module.exports = async function(arg) {
 
 	function printPaths(files, level) {
 		level = level || 0;
+		let filesInfo = [];
 		for (let i in files) {
 			tags = tagsArr[i];
-			let elem = `#inFile${infidx++}.uie.link.disabled `;
-			elem += '/ '.repeat(level);
+			let info = {
+				Index: i
+			};
 			let names = ['PatientName', 'PatientID', 'StudyDate', 'Modality', 'Laterality'];
 			for (let name of names) {
-				elem += getTag(name) + ' ';
+				info[name] = getTag(name);
 			}
-			elem = pug(elem);
-			$('#loadInFiles').append(elem);
-
-			if (i >= 20) {
-				$('#loadInFiles').append(pug('p ...'));
-				break;
-			}
+			filesInfo.push(info);
 		}
+
+		let $table = $('#inputFilesTable');
+		$table.bootstrapTable({
+			data: filesInfo
+		});
+		$('div.search input').eq(0).prop('placeholder', 'Search Input Files');
 	}
 
 	async function loadFile(inputFileIndex, noTabSwitch) {
