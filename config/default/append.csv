@@ -1,2 +1,0 @@
-index + '_' + $PatientID + '_' + $PatientName.replace(/ /g, '_') + '_' + $StudyDate
-file.base

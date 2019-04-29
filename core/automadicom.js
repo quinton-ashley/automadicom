@@ -8,14 +8,13 @@
 // button on input screen
 // StudyInstanceUID and SeriesInstanceUID
 
-// PatientID PatientName StudyDate Modality Laterality
-
 // replace instead of remove
 
-const chalk = require('chalk'); // open source terminal text coloring library
-const CSV = require('csv-string'); // open source csv parser and stringifier
+const chalk = require('chalk'); // terminal text coloring library
+const CSV = require('csv-string'); // csv parser and stringifier
 const dcmtk = require(__rootDir + '/core/dcmtk.js'); // my nodejs dcmtk bindings library
-const strSim = require('string-similarity'); // open source string similarity algorithm
+const deepExtend = require('deep-extend');
+const strSim = require('string-similarity'); // string similarity algorithm
 const {
 	render
 } = require('tree-from-paths');
@@ -33,22 +32,27 @@ let inFiles; // input file paths
 let fidx = 0; // the current file index
 
 let outDir;
-let append;
-let outPaths; // the new path of the files
+let outPaths = []; // the new path of the files
 
 let dict; // dictionary with tag key to value pairs
 
-let tags; // all the tags in the current file
-let rules; // rules that get evaluated to make the tag's new value
-let values; // (for the cur fidx) stores the future values of the tags
+let configs = {};
+let rules = {};
 
-let failed; // files that failed
+let append = [];
+
+let failed = []; // files that failed
 
 var a = 0;
 
 class AutomaDicom {
 	constructor() {
 		this.dictID;
+	}
+
+	async test() {
+		// await this.loadConfigFiles();
+		// await delay(1000000);
 	}
 
 	async setup() {
@@ -68,6 +72,8 @@ class AutomaDicom {
 		await fs.ensureDir(usrDir + '/output');
 		await fs.ensureDir(usrDir + '/logs');
 		if (!(await fs.exists(usrDir + '/config'))) {
+			log('copying config files');
+			await fs.ensureDir(usrDir + '/config');
 			let files = await klaw(__rootDir + '/config');
 			for (let file of files) {
 				log(__rootDir);
@@ -75,29 +81,25 @@ class AutomaDicom {
 				await fs.copy(file, usrDir + '/' + path.relative(__rootDir, file));
 			}
 		}
+		await this.loadConfigFiles();
 	}
 
 	async start(arg) {
 		if (!inFiles) await this.setup();
 
 		for (let i = 0; i < inFiles.length; i++) {
-			if ((!(await fs.stat(inFiles[i])).isDirectory()) &&
-				inFiles[i].match(/^(.*\.dcm|.*\.\d+|.*(\/|\\)[^.]+)$/gmi) &&
-				!inFiles[i].match(/dir/i)) {
-
-				try {
-					await this.edit(i);
-					continue;
-				} catch (ror) {
-					er(ror);
-					failed.push(i);
-				}
-			}
-			outPaths.push('');
+			// try {
+			await this.edit(i);
+			// continue;
+			// } catch (ror) {
+			// 	er(ror);
+			// 	failed.push(i);
+			// }
+			// outPaths.push('');
 		}
-		if (!arg.n) {
-			await this.copyNonDicomFiles();
-		}
+		// if (!arg.n) {
+		// 	await this.copyNonDicomFiles();
+		// }
 
 		if (failed.length >= 1) {
 			er('failed for files:');
@@ -107,7 +109,9 @@ class AutomaDicom {
 		} else {
 			log(chalk.green('100% success'));
 		}
-		await fs.outputFile(usrDir + '/logs/' + new Date().toString() + '.txt', results());
+		let date = new Date().toString().replace(/\:/g, ' ');
+		let logFile = usrDir + '/logs/' + date + '.txt';
+		await fs.outputFile(logFile, this.results());
 	}
 
 	getInputDir() {
@@ -115,12 +119,7 @@ class AutomaDicom {
 	}
 
 	async setInput(input) {
-		if (input) {
-			inDir = input;
-		} else {
-			if (inFiles) return;
-			inDir = arg.i || arg.input || usrDir + '/input';
-		}
+		inDir = input || arg.i || arg.input || usrDir + '/input';
 
 		log('');
 		log('input: ' + inDir + '\n');
@@ -136,13 +135,11 @@ class AutomaDicom {
 			let allFiles = await klaw(inDir);
 			inFiles = [];
 			for (let file of allFiles) {
-				if (path.parse(file).base[0] != '.' && !(await fs.stat(file)).isDirectory()) {
+				if (path.parse(file).base[0] != '.' &&
+					!(await fs.stat(file)).isDirectory() &&
+					file.match(/^(.*\.(dcm|bak)|.*\.\d+|.*(\/|\\)[^.]+)$/gmi)) {
 					inFiles.push(path.nx(file));
 				}
-			}
-
-			if (!arg.n && arg.c) {
-				await this.cleanEmptyFoldersRecursively(inDir);
 			}
 		} else {
 			inFiles = [inDir];
@@ -156,108 +153,121 @@ class AutomaDicom {
 	}
 
 	async setOutputDir(output) {
-		if (output) {
-			outDir = output;
-		} else {
-			if (outDir) return;
-			outDir = arg.o || arg.output || usrDir + '/output'
+		outDir = output;
+		log('Output Dir: ' + outDir);
+	}
+
+	async loadConfigFiles() {
+		let files = await klaw(usrDir + '/config');
+		for (let file of files) {
+			let config = await fs.readFile(file, 'utf8');
+			file = path.parse(file);
+			if (file.ext == '.json') {
+				configs[file.name] = JSON.parse(config);
+			} else {
+				append = CSV.parse(config, '\n');
+				for (let i in append) {
+					append[i] = append[i][0];
+				}
+			}
 		}
 	}
 
-	async loadRulesFile(rulesFile) {
-		let rulesText;
-		if (!rulesFile) {
-			rulesFile = arg.r || arg.rules || usrDir + '/config/default/edit.csv';
-		}
-		try {
-			rulesText = await fs.readFile(rulesFile, 'utf8');
-			this.setRules(rulesText);
-		} catch (ror) {
-			er(ror);
-		}
+	getConfigs() {
+		return configs;
 	}
 
-	setRules(rulesText) {
-		if (arg.m) {
-			return;
-		}
-
-		let lines = CSV.parse(rulesText, ';');
-		if (lines.length <= 1) {
-			er('rules files has no rules!');
-			return;
-		}
-		// TODO
+	toggleConfig(configName, enabled) {
+		configs[configName].enabled = enabled;
+		log(configName + ' is ' + enabled);
 	}
 
-	async loadAppendFile(appendFile) {
-		if (!appendFile) {
-			appendFile = arg.a || arg.append || usrDir + '/config/default/output.csv';
+	getRules() {
+		rules = {};
+		for (let configName in configs) {
+			let config = configs[configName];
+			if (!config.enabled) continue;
+			deepExtend(rules, config.rules);
 		}
-		try {
-			append = CSV.parse(await fs.readFile(appendFile, 'utf8'), ';');
-		} catch (ror) {
-			er(ror);
-		}
+		return rules;
 	}
 
-	setAppend(appendArr) {
-		append = appendArr;
+	// flatten tag object to conform to a single level for displaying
+	// tag data in the tag editor table
+	flattenTags(meta, level, idBase) {
+		if (!level) level = 0;
+		if (!idBase) idBase = '';
+		let tags = [];
+		let i = 0;
+		for (let id in meta) {
+			let tag = meta[id];
+			if (tag.id) {
+				continue;
+			}
+			tag.name = this.dictID[id] || 'UnknownTagName';
+			if (level == 0) tag.pos = i;
+			if (level >= 1) tag.pos = idBase + '.' + i;
+			tag.id = id.substr(0, 4) + '_' + id.substr(4, 8);
+			if (!tag.Value) {
+				tag.value = '';
+				delete tag.Value;
+				continue;
+			}
+			let sub;
+			if (typeof tag.Value[0] != 'object') {
+				if (tag.Value.length == 1) {
+					tag.value = tag.Value[0];
+				} else {
+					if (typeof tag.Value[0] == 'number') {
+						tag.value = '[' + tag.Value.toString() + ']';
+					} else if (typeof tag.Value[0] == 'string') {
+						tag.value = '[';
+						for (let i in tag.Value) {
+							if (!tag.Value[i]) break;
+							if (i != 0) tag.value += ',';
+							// tag.value += '&quot;' + tag.Value[i] + '&quot;';
+							tag.value += tag.Value[i];
+						}
+						tag.value += ']';
+					}
+				}
+			} else if (tag.Value[0].Alphabetic) {
+				tag.value = tag.Value[0].Alphabetic;
+			} else {
+				tag.value = '[ ... ]';
+				sub = tag.Value[0];
+			}
+			tag.edit = '';
+			delete tag.Value;
+			tags.push(tag);
+			if (sub) {
+				tags = tags.concat(this.flattenTags(sub, level + 1, tag.pos));
+			}
+			i++;
+		}
+		return tags;
 	}
 
 	async getTags(file) {
 		file = this._fileAmb(file);
 		log(file);
-		tags = await dcmtk.getTags(file);
-		return tags;
+		let meta = await dcmtk.getTags(file);
+		return this.flattenTags(meta);
 	}
 
-	async edit(file) {
+	async edit(file, tags) {
 		file = this._fileAmb(file);
-		if (!arg.s) {
-			log('loading: ' + file);
-		}
-		this.getTags();
-		if (arg.l) {
-			log(JSON.stringify(data, null, 2));
-		}
+		tags = tags || await this.getTags(file);
+		let values = await this.evalRules(tags);
+		log(values);
 
-		if (!arg.m) {
-			//
-			// for (let i = 0; i < tags.length; i++) {
-			// 	let tag = tags[i];
-			// 	values.push(await fulfillTagReqs(rules[i]));
-			// 	errorCheck(tag, values[i]);
-			// }
-			// if (!arg.s) {
-			// 	log(file + ' : ');
-			// 	for (let i = 0; i < values.length; i++) {
-			// 		log(`${tags[i]} = ${values[i]}`);
-			// 	}
-			// }
-		}
-		let outPath = await getOutPath(file);
-		if (!arg.s) {
-			log('writing: ' + outPath + '\n');
-		}
+		let outPath = await this.getOutPath(file, tags, values);
+		if (!arg.s) log('writing: ' + outPath + '\n');
 
-
-		if (!arg.n) {
-			// if argion m (move only) is false then write the new file to the output
-			// location, else move the original file to the output location
-			if (!arg.m) {
-				// await fs.copy(todo, outPath);
-				// await fs.unlink();
-			} else {
-				await fs.copy(file, outPath);
-			}
-		}
+		await fs.copy(file, outPath);
+		await dcmtk.modifyTags(outPath, values);
 		outPaths.push(outPath);
-
-		if (!arg.n && arg.c) {
-			// if running with argion c, delete the original file
-			await fs.unlink(file);
-		}
+		await fs.remove(outPath + '.bak');
 	}
 
 	// solve file arg ambivalence
@@ -271,19 +281,22 @@ class AutomaDicom {
 		return file;
 	}
 
-	async getOutPathFor(file) {
+	async getOutPath(file, tags, values) {
 		file = this._fileAmb(file);
 		// let's decide where to write the file!
 		let dir, imgName;
 		let outPath = '';
 		if (outDir) {
 			dir = outDir;
-			for (i = 0; i < append.length - 1; i++) {
-				dir += '/' + await fulfillTagReqs(append[i][0]);
+			for (let i = 0; i < append.length - 1; i++) {
+				dir += '/' + await this.evalRule(append[i], tags, values);
 			}
-			imgName = await fulfillTagReqs(append[append.length - 1][0]);
-			// at the end of this loop it is assured that a unique file name has been created
-			for (i = 0; outPath == '' || outPaths.includes(outPath) || (await fs.exists(outPath)); i++) {
+			imgName = await this.evalRule(append[append.length - 1], tags, values);
+			// at the end of this loop it is assured that a unique file name has
+			// been created
+			for (let i = 0; outPath == '' ||
+				outPaths.includes(outPath) ||
+				(await fs.exists(outPath)); i++) {
 				if (i >= 1) {
 					outPath = `${dir}/${i.toString()}_${imgName}`;
 				} else {
@@ -300,55 +313,92 @@ class AutomaDicom {
 		return outPath;
 	}
 
-	async fulfillTagReqs(str) {
+	getTagValue(name, tags) {
+		let tag = tags.find(x => x.name === name) || {};
+		return tag.edit || tag.value;
+	}
+
+	async previewChanges(file, tags) {
+		file = this._fileAmb(file);
+		tags = tags || await this.getTags(file);
+		let values = await this.evalRules(tags);
+		for (let i in tags) {
+			if (values[tags[i].name]) {
+				tags[i].edit = values[tags[i].name];
+			} else {
+				tags[i].edit = tags[i].value;
+			}
+		}
+		return tags;
+	}
+
+	async evalRules(tags) {
+		rules = this.getRules();
+		let values = {};
+		for (let tagName in rules) {
+			values[tagName] = await this.evalRule(rules[tagName], tags, values);
+		}
+		return values;
+	}
+
+	async evalRule(rule, tags, values) {
 		let match, reqTag, tagReq;
 		let useOgVal = false;
 		let editIdx = -1;
 		let regex = /\$[\w|\-|_]*/i;
 		// loops while a match is found
-		while (match = regex.exec(str)) {
+		while (match = regex.exec(rule)) {
 			useOgVal = (match[0][1] == '$');
 			tagReq = match[0].slice(((useOgVal) ? 2 : 1), match[0].length);
 			// if the original value of the tag is requested
 			// or if the tag requested is not found in tags
 			// or if the tag requested is found in tags but does not yet have a value
-			if (useOgVal || (editIdx = tags.indexOf(tagReq)) <= -1 || editIdx >= values.length) {
+			if (useOgVal || (!values[tagReq] &&
+					(editIdx = this.getTagValue(tagReq, tags)))) {
 				// get the tag from the zero level DICOM by name
-				reqTag = data.getFromName(tagReq);
+				reqTag = this.getTagValue(tagReq, tags);
 				// if it's still null it wasn't found
 				if (reqTag == null) {
 					er(`Error: ${tagReq} tag not found!!`);
 					reqTag = 'null';
 				}
 				reqTag = reqTag.replace('\u0000', '');
-			} else {
-				// get the tag from the values array
-				reqTag = values[editIdx];
+			} else if (tagReq.includes('file')) {
+				reqTag = path.parse(inFiles[fidx]);
+			} else if (tagReq == 'index') {
+				reqTag = fidx;
+			} else if (values[tagReq]) {
+				reqTag = values[tagReq];
 			}
 			// replace the request with the tag itself, the quotes are necessary
-			str = str.replace('$' + tagReq, `\'${reqTag}\'`);
+			if (typeof reqTag == 'string') {
+				reqTag = `'${reqTag}'`;
+			} else {
+				reqTag = '(' + JSON.stringify(reqTag) + ')';
+			}
+			rule = rule.replace('$' + tagReq, reqTag);
 		}
 		// note that eval is used to evaluate user javascript dynamically!
 		// direct access to String methods gives users advanced control
 		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String
+		let res;
 		try {
-			str = eval(str);
+			res = eval(rule);
 		} catch (ror) {
-			er('eval failed for request: ' + str);
-			throw err;
+			res = rule;
 		}
-		return str;
+		return res;
 	}
 
-	errorCheck(tag, value) {
-		switch (tag) {
+	errorCheck(name, value) {
+		switch (name) {
 			case 'AcquisitionDate':
 			case 'ContentDate':
 			case 'InstanceCreationDate':
 			case 'PatientBirthDate':
 			case 'StudyDate':
 				if (typeof value !== 'string') {
-					throw new Error(`${tag} ${value}
+					throw new Error(`${name} ${value}
 Dates must be entered as a String in a standard format, ex:'YYYYMMDD'
 					`);
 				}
@@ -356,7 +406,7 @@ Dates must be entered as a String in a standard format, ex:'YYYYMMDD'
 				let isMonth = (parseInt(value.slice(4, 6)) <= 12);
 				let isDay = (parseInt(value.slice(6, 8)) <= 31);
 				if ((!isYear || !isMonth || !isDay)) {
-					log(`${tag} ${value}
+					log(`${name} ${value}
 Dates must be entered as a String in a standard format, ex:'YYYYMMDD'
 					`);
 				}
@@ -367,7 +417,7 @@ Dates must be entered as a String in a standard format, ex:'YYYYMMDD'
 			case 'PatientBirthTime':
 			case 'StudyTime':
 				if (typeof value !== 'string') {
-					throw new Error(`${tag} ${value}
+					throw new Error(`${name} ${value}
 Times must be entered as a String in a standard format, ex:'HHMMSS'
 					`);
 				}
@@ -378,7 +428,7 @@ Times must be entered as a String in a standard format, ex:'HHMMSS'
 
 	results() {
 		let res = '';
-		for (let i = 0; i < inFiles.length; i++) {
+		for (let i in inFiles) {
 			res += inFiles[i] + '\n';
 			res += ((outPaths[i]) ? outPaths[i] : 'failed') + '\n';
 		}
@@ -390,63 +440,8 @@ Times must be entered as a String in a standard format, ex:'HHMMSS'
 			}
 		);
 		res += '\nRESULTS TREE:\n\n' + resTree;
+		return res;
 	}
-
-	async cleanEmptyFoldersRecursively(folder) {
-		if (!(await fs.stat(folder)).isDirectory()) {
-			return 1;
-		}
-		let inFiles = await klaw(folder);
-		if (inFiles.length >= 1) {
-			for (file in inFiles) {
-				let fullPath = folder + '/' + file;
-				await cleanEmptyFoldersRecursively(fullPath);
-			}
-			inFiles = await klaw(folder);
-		}
-		if (inFiles.length <= 1) {
-			if (inFiles[0] == '.DS_Store') {
-				await fs.unlink(folder + '/' + inFiles[0]);
-			} else if (inFiles.length == 1) {
-				return;
-			}
-			await fs.rmdir(folder);
-			log('removed: ', folder);
-		}
-	}
-
-	// async copyNonDicomFiles() {
-	// 	for (let index = 0; index < failed.length; index++) {
-	// 		try {
-	// 			let i = failed[index];
-	// 			let file = files[i];
-	// 			let base = path.parse(file).base;
-	// 			if (base.match(/dir/i)) {
-	// 				log('loading: ' + file);
-	// 				let dirs = [];
-	// 				let j, tmp;
-	// 				for (j = 1; !tmp && i >= j; j++) {
-	// 					tmp = path.parse(outPaths[i - j]).dir;
-	// 				}
-	// 				dirs.push(tmp);
-	// 				tmp = '';
-	// 				for (j = 1; !tmp && i < files.length - j; j++) {
-	// 					tmp = path.parse(outPaths[i + j]).dir;
-	// 				}
-	// 				dirs.push(tmp);
-	// 				log(dirs);
-	// 				let outPath = strSim.findBestMatch(path.parse(file).dir.slice(inDir.length), dirs).bestMatch.target + '/' + base;
-	// 				log('writing: ' + outPath + '\n');
-	// 				await fs.copy(file, outPath);
-	// 				outPaths[i] = outPath;
-	// 				failed.splice(index, 1);
-	// 				index--;
-	// 			}
-	// 		} catch (ror) {
-	// 			er(ror);
-	// 		}
-	// 	}
-	// }
 
 }
 

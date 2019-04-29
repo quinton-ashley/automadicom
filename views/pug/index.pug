@@ -1,92 +1,79 @@
 doctype html
 html
-	head
-		title automadicom
-		meta(charset='utf-8')
-		link(rel='stylesheet' type='text/css' href=node_modules + '/bootstrap/dist/css/bootstrap.min.css')
-		link(rel='stylesheet' type='text/css' href=node_modules + '/bootstrap-table/dist/bootstrap-table.min.css')
-		link(rel='stylesheet' type='text/css' href=node_modules + '/contro-ui/dist/css/contro-ui.css')
-		link(rel='stylesheet' type='text/css' href='../css/style.css')
-		link(rel='stylesheet' type='text/css' href=node_modules + '/material-design-icons-iconfont/dist/material-design-icons.css')
+  head
+    title automadicom
+    meta(charset='utf-8')
+    link(rel='stylesheet' type='text/css' href=node_modules + '/bootstrap/dist/css/bootstrap.min.css')
+    link(rel='stylesheet' type='text/css' href=node_modules + '/bootstrap-table/dist/bootstrap-table.min.css')
+    link(rel='stylesheet' type='text/css' href=node_modules + '/contro-ui/dist/css/contro-ui.css')
+    link(rel='stylesheet' type='text/css' href='../css/style.css')
+    link(rel='stylesheet' type='text/css' href=node_modules + '/material-design-icons-iconfont/dist/material-design-icons.css')
 
-body.light
-	.container-fluid: .row.justify-content-center.p-2
-		#leftTab
-			.col-12.collapse.show
-				.row: .col-12.p-0: h1.mb-0.pb-0 automadicom
-				#inputRow.row
-					.col-10.my-2.pr-2.pl-0
-						input#inputPath.p-2(type='text' value='~/Documents/automadicom/input')
-					.col-2.my-2: .row.justify-content-center
-						button#input.uie.btn.col Select
-				.row: .col-12.p-0: table#inputFilesTable.table(data-search="true" data-search-align="left" data-id-field="id" data-sort-name="id" data-single-select="true" data-click-to-select="true")
-					thead: tr
-						th(data-field="Index" data-sortable="true") #
-						th(data-field="PatientName" data-sortable="true") PatientName
-						th(data-field="PatientID" data-sortable="true") PatientID
-						th(data-field="StudyDate" data-sortable="true") StudyDate
-						th(data-field="Modality" data-sortable="true") Modality
-						th(data-field="Laterality" data-sortable="true") Laterality
-						th(data-field="Index" data-sortable="false" data-formatter="previewFormatter") Preview Changes
-					tbody#tags.border-top-0.border-bottom-0
-			.col-12.fixed-bottom.px-4
-				.row.p-2
-					.col-4.form-check
-						input#exampleCheck1.form-check-input(type='checkbox')
-						label.form-check-label(for='exampleCheck1') Anonymize Patient Data
-					.col-4.form-check
-						input#exampleCheck1.form-check-input(type='checkbox')
-						label.form-check-label(for='exampleCheck1') Anonymize Institution Data
-					.col-4.form-check
-						input#exampleCheck1.form-check-input(type='checkbox')
-						label.form-check-label(for='exampleCheck1') Generate New UIDs
-					.col-4.form-check
-						input#exampleCheck1.form-check-input(type='checkbox')
-						label.form-check-label(for='exampleCheck1') Remove Descriptions
-					.col-4.form-check
-						input#exampleCheck1.form-check-input(type='checkbox')
-						label.form-check-label(for='exampleCheck1') Remove Clinical Data
-					.col-4.form-check
-						input#exampleCheck1.form-check-input(type='checkbox')
-						label.form-check-label(for='exampleCheck1') Hierachical Output Folders
-				.row.pb-2
-					//- .col-4.p-0: button#viewAllTags.uie.tog.tog-l.disabled.p-1 Show All Tags
-					//- .col-4.p-0.pr-1: button#viewChanges.uie.tog.tog-r.p-1 Preview Changes Only
-					.col.p-0.px-1: button#adv.uie.btn.p-1 Anonymization Options
-					.col.p-0.pl-1: button#start.uie.btn.p-1 Start
-		#midTab.col-12.collapse
-			.row
-				.col-1: button#back.uie.tbar: i.material-icons arrow_back_ios
-				.col-10.p-0: h1 Preview Changes
-				.col-1
-			.row: .col-12.p-0: table#tagsTable.table(data-search="true" data-search-align="left" data-id-field="id" data-sort-name="id")
-				thead: tr
-					th(data-field="pos" data-sortable="true") #
-					th(data-field="id" data-sortable="true") ID
-					th(data-field="vr" data-sortable="true") VR
-					th(data-field="name" data-sortable="true") Name
-					th(data-field="value" data-sortable="true" data-formatter="uneditableFormatter") Current Value
-					th(data-field="edit" data-sortable="true" data-formatter="uneditableFormatter") New Value
-				tbody#tags.border-top-0.border-bottom-0
+body.dark
+  .container-fluid: .row.justify-content-center.p-2
+    #leftTab.col-12.p-0: .row
+      .col-12: h1 automadicom
+      .col-8: .row
+        .col-10.pr-1
+          input#inputPath.p-2(type='text' value='~/Documents/automadicom/input')
+        .col-2.pl-1
+          button#input.uie.btn.col Select
+        .col-12.pt-2: table#inputFilesTable.table(data-search="true" data-search-align="left" data-id-field="id" data-sort-name="id")
+          thead: tr
+            th.collapse.hide(data-field="StudyInstanceUID" data-sortable="true") StudyInstanceUID
+            th(data-field="PatientID" data-sortable="true") PatientID
+            th(data-field="PatientName" data-sortable="true") PatientName
+            th(data-field="StudyDate" data-sortable="true") StudyDate
+            th(data-field="Modality" data-sortable="true") Modality
+            th(data-field="Laterality" data-sortable="true") Laterality
+          tbody#tags.border-top-0.border-bottom-0
+      .col-4.pl-0: #images.row
+      #footer.col-12.fixed-bottom.px-4
+        #checkboxes.row.p-2
+        .row.pb-2
+          //- .col-4.p-0: button#viewAllTags.uie.tog.tog-l.disabled.p-1 Show All Tags
+          //- .col-4.p-0.pr-1: button#viewChanges.uie.tog.tog-r.p-1 Preview Changes Only
+          .col.p-0.px-1: button#adv.uie.btn.p-1 Anonymization Options
+          .col.p-0.pl-1: button#start.uie.btn.p-1 Start
+    #midTab.col-12.collapse
+      .row
+        .col-1: button#back.uie.tbar: i.material-icons arrow_back_ios
+        .col-10.p-0: h1 Preview Changes
+        .col-1
+      .row: .col-12.p-0: table#tagsTable.table(data-search="true" data-search-align="left" data-id-field="id" data-sort-name="id")
+        thead: tr
+          th(data-field="pos" data-sortable="true") #
+          th(data-field="id" data-sortable="true") ID
+          th(data-field="vr" data-sortable="true") VR
+          th(data-field="name" data-sortable="true") Name
+          th(data-field="value" data-sortable="true" data-formatter="uneditableFormatter") Current Value
+          th(data-field="edit" data-sortable="true" data-formatter="uneditableFormatter") New Value
+        tbody#tags.border-top-0.border-bottom-0
+    #rightTab.col-12.collapse
+      .row: .col-12.p-0: table#editorTable.table(data-search="true" data-search-align="left" data-id-field="id" data-sort-name="id")
+        thead: tr
+          th(data-field="tag" data-sortable="true") Tag
+          th(data-field="value" data-sortable="true" data-formatter="editableFormatter") New Value
+        tbody#editor.border-top-0.border-bottom-0
 
-	script.
-		console.log('opening index.pug');
-		console.log('#{node_modules}');
+  script.
+    console.log('opening index.pug');
+    console.log('#{node_modules}');
 
-		function previewFormatter(x) {
-			return `<button id="inFile${x}" class="uie link">View Tags</button>`;
-		}
+    function previewFormatter(x) {
+      return `<button id="inFile${x}" class="uie link">View Tags</button>`;
+    }
 
-		function uneditableFormatter(x) {
-			return inputFormatter(x, 'uneditable');
-		}
+    function uneditableFormatter(x) {
+      return inputFormatter(x, 'uneditable');
+    }
 
-		function editableFormatter(x) {
-			return inputFormatter(x, '');
-		}
+    function editableFormatter(x) {
+      return inputFormatter(x, '');
+    }
 
-		function inputFormatter(x, uneditable) {
-			return (x!='[ ... ]')?`<input class="${uneditable}" value="${x}" ${(uneditable)?'readonly':''}>`:x;
-		}
+    function inputFormatter(x, uneditable) {
+      return (x!='[ ... ]')?`<input class="${uneditable}" value="${x}" ${(uneditable)?'readonly':''}>`:x;
+    }
 
-		require('../js/index.js')(JSON.parse('#{arg}'.replace(/&quot;/g, '"')));
+    require('../js/index.js')(JSON.parse('#{arg}'.replace(/&quot;/g, '"')));

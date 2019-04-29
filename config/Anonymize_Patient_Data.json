@@ -1,0 +1,23 @@
+{
+	"type": "default",
+	"level": "0",
+	"rules": {
+		"CurrentPatientLocation": "NA",
+		"PatientAddress": "NA",
+		"PatientAge": 0,
+		"PatientBirthDate": "19000101",
+		"PatientBirthName": "Anonymous",
+		"PatientBirthTime": "0000",
+		"PatientComments": "NA",
+		"PatientID": "Anonymous",
+		"PatientIdentityRemoved": "Yes",
+		"PatientMotherBirthName": "Anonymous",
+		"PatientName": "Anonymous",
+		"PatientReligiousPreference": "NA",
+		"PatientSex": "NA",
+		"PatientSize": 0,
+		"PatientTelephoneNumbers": "000-000-0000",
+		"PatientTelecomInformation": "NA",
+		"PatientWeight": 0
+	}
+}

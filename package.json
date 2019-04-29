@@ -81,12 +81,14 @@
     "contro": "^2.1.2",
     "contro-ui": "^1.0.11",
     "csv-string": "^3.1.5",
+    "deep-extend": "^0.6.0",
     "delay": "^4.1.0",
-    "dwv": "^0.19.2",
+    "dwv": "^0.25.2",
     "electron-pug": "^2.0.0",
     "flat": "^4.1.0",
     "fs-extra": "^7.0.1",
     "jquery": "^3.3.1",
+    "json-parse-better-errors": "^1.0.2",
     "klaw": "^3.0.0",
     "markdown-it": "^8.3.2",
     "material-design-icons-iconfont": "^4.0.5",
@@ -140,5 +142,5 @@
     "postversion": "git push",
     "V": "git push origin $npm_package_version && npm publish"
   },
-  "version": "0.5.31"
+  "version": "0.5.32"
 }

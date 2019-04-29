@@ -56,6 +56,8 @@ body.light {
 }
 
 .dark form,
+.dark h1,
+.dark i,
 .dark input,
 .dark nav,
 .dark table,
@@ -184,6 +186,7 @@ div.progress-bar {
 	border-left: 0;
 	border-right: 0;
 } */
+
 .td-has-input {
 	font-size: 0;
 }
@@ -197,9 +200,13 @@ div.float-left.search {
 	width: 100%!important;
 }
 
-input,
+input:not(.form-check-input),
 textarea {
 	width: 100%;
+	height: 100%;
+}
+
+.form-check-input {
 	height: 100%;
 }
 @font-face {
@@ -226,8 +233,12 @@ span.card-view-value {
 	text-align: left;
 }
 
-#nav-bottom {
+#footer {
 	background-color: #ddd;
+}
+
+.dark #footer {
+	background-color: #000;
 }
 
 .form-check-input {
@@ -246,4 +257,18 @@ h1 {
 	text-align: left;
 	margin: 0;
 	padding: 0;
+}
+
+#checkboxes .uie {
+	text-align: left;
+}
+
+#footer {
+	border-color: #000;
+	border-top: 1px;
+}
+
+.uie.table {
+	display: table-row;
+	text-align: left;
 }
