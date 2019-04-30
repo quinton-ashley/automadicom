@@ -155,7 +155,7 @@ module.exports = async function(arg) {
 .col-12: .row
 	#dwv${i}.col-11: .layerContainer: canvas#dwvCanvas${i}.imageLayer
 	p.col-6 Image ${i}
-	button.col-6#inFile${i}.uie.link View Tags
+	button.col-6#inFile${i}.uie.link Preview Edits
 `));
 			let app = new dwv.App();
 			app.init({

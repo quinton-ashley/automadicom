@@ -177,6 +177,7 @@ div.progress-bar {
 	color: #777;
 }
 
+.link,
 .uie.link {
 	color: #818c46;
 	background-color: transparent;
@@ -186,7 +187,6 @@ div.progress-bar {
 	border-left: 0;
 	border-right: 0;
 } */
-
 .td-has-input {
 	font-size: 0;
 }

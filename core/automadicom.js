@@ -160,6 +160,8 @@ class AutomaDicom {
 	async loadConfigFiles() {
 		let files = await klaw(usrDir + '/config');
 		for (let file of files) {
+			log(file);
+			if ((await fs.stat(file)).isDirectory()) continue;
 			let config = await fs.readFile(file, 'utf8');
 			file = path.parse(file);
 			if (file.ext == '.json') {
