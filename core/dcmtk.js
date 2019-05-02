@@ -27,6 +27,8 @@ class DCMTK {
 			} else {
 				await fs.copy(dcmtk + '/dcm2json', dcm2json);
 				await fs.copy(dcmtk + '/dcmodify', dcmodify);
+				await spawn('chmod', ['+x', dcm2json]);
+				await spawn('chmod', ['+x', dcmodify]);
 			}
 		}
 	}
