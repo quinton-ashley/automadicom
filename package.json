@@ -87,7 +87,7 @@
     "electron-pug": "^2.0.0",
     "flat": "^4.1.0",
     "fs-extra": "^7.0.1",
-    "jquery": "^3.4.0",
+    "jquery": "^3.4.1",
     "json-parse-better-errors": "^1.0.2",
     "klaw": "^3.0.0",
     "markdown-it": "^8.3.2",
@@ -142,5 +142,5 @@
     "postversion": "git push",
     "V": "git push origin $npm_package_version && npm publish"
   },
-  "version": "0.5.37"
+  "version": "0.5.38"
 }

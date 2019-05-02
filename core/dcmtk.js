@@ -16,13 +16,19 @@ class DCMTK {
 	constructor() {}
 
 	async setup(usrDir) {
+		let dcmtk = __rootDir + '/dcmtk/' + osType;
 		cwd = usrDir + '/dcmtk/' + osType;
-		if (!(await fs.exists(cwd))) {
-			await fs.copy(__rootDir + '/dcmtk/' + osType, cwd);
-		}
 		let ext = ((win) ? '.exe' : '');
 		dcm2json = cwd + '/dcm2json' + ext;
 		dcmodify = cwd + '/dcmodify' + ext;
+		if (!(await fs.exists(cwd))) {
+			if (win) {
+				await fs.copy(dcmtk, cwd);
+			} else {
+				await fs.copy(dcmtk + '/dcm2json', dcm2json);
+				await fs.copy(dcmtk + '/dcmodify', dcmodify);
+			}
+		}
 	}
 
 	async getTags(file) {
