@@ -4,16 +4,26 @@
  */
 
 const child = require('child_process').execFile;
-const dcm2json = `${__rootDir}/dcmtk/${osType}/dcm2json${((win)?'.exe':'')}`;
-const dcmodify = `${__rootDir}/dcmtk/${osType}/dcmodify${((win)?'.exe':'')}`;
-
 const parseJSON = require('json-parse-better-errors');
 
 let dictID;
 let dictVR;
+let cwd;
+let dcm2json;
+let dcmodify;
 
 class DCMTK {
 	constructor() {}
+
+	async setup(usrDir) {
+		cwd = usrDir + '/dcmtk/' + osType;
+		if (!(await fs.exists(cwd))) {
+			await fs.copy(__rootDir + '/dcmtk/' + osType, cwd);
+		}
+		let ext = ((win) ? '.exe' : '');
+		dcm2json = cwd + '/dcm2json' + ext;
+		dcmodify = cwd + '/dcmodify' + ext;
+	}
 
 	async getTags(file) {
 		return new Promise((resolve, reject) => {
@@ -22,8 +32,12 @@ class DCMTK {
 			let kill = false;
 			let finished = false;
 
-			let filterResults = () => {
+			let filterResults = (error, stdout, stderr) => {
 				if (finished) return;
+				if (error) {
+					er(error);
+					resolve(null);
+				}
 				let tags;
 				if (str.slice(-1) != '}') str += '"}}';
 				try {
@@ -36,7 +50,6 @@ class DCMTK {
 						delete tags[id];
 					}
 				}
-				log(tags);
 				finished = true;
 				resolve(tags);
 			};
@@ -71,7 +84,8 @@ class DCMTK {
 				args.push(`${tagName}=${values[tagName]}`);
 			}
 			log(args);
-			let cmd = child(dcmodify, args, () => resolve(file + '.bak'));
+			let cmd = child(dcmodify, args,
+				(error, stdout, stderr) => resolve(file + '.bak'));
 		});
 	}
 }

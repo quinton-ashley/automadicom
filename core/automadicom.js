@@ -67,7 +67,7 @@ class AutomaDicom {
 		this.dictID = await fs.readFile(__rootDir + '/db/dictID.json', 'utf8');
 		this.dictID = JSON.parse(this.dictID);
 
-
+		await dcmtk.setup(usrDir);
 		await fs.ensureDir(usrDir + '/input');
 		await fs.ensureDir(usrDir + '/output');
 		await fs.ensureDir(usrDir + '/logs');
