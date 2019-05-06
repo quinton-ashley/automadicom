@@ -134,7 +134,7 @@
     "up-outdated": "npm install --save $(npm outdated | cut -d ' ' -f -1 | sed '1d' | sed 's/$/@*/')",
     "rebuild": "npm rebuild --runtime=electron --target=4.1.5 --disturl=https://atom.io/download/atom-shell --abi=64",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder -m -l -w",
+    "dist": "electron-builder -m -w",
     "gh-publish": "electron-builder -m -l -w -p always",
     "postinstall": "electron-builder install-app-deps",
     "v": "npm version patch --force",
@@ -142,5 +142,5 @@
     "postversion": "git push",
     "V": "git push origin $npm_package_version && npm publish"
   },
-  "version": "0.5.40"
+  "version": "0.5.41"
 }
