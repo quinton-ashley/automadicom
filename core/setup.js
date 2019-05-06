@@ -141,7 +141,11 @@ module.exports = async function(arg) {
 	global.cui = require('contro-ui');
 	// global.cui = require('./contro-ui.js');
 
-	Mousetrap.bind(['command+argion+i', 'command+shift+i', 'ctrl+shift+i', 'ctrl+alt+i'], function() {
+	let toggleDev;
+	if (mac) toggleDev = ['command+option+i', 'command+shift+i'];
+	if (win) toggleDev = ['ctrl+alt+i', 'ctrl+shift+i'];
+
+	Mousetrap.bind(toggleDev, function() {
 		electron.getCurrentWindow().toggleDevTools();
 		return false;
 	});

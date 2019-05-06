@@ -27,6 +27,8 @@ class DCMTK {
 			} else {
 				await fs.copy(dcmtk + '/dcm2json', dcm2json);
 				await fs.copy(dcmtk + '/dcmodify', dcmodify);
+				await fs.copy(dcmtk + '/dicom.dic',
+					'/usr/local/Cellar/dcmtk/3.6.4/share/dcmtk/dicom.dic');
 				await spawn('chmod', ['+x', dcm2json]);
 				await spawn('chmod', ['+x', dcmodify]);
 			}
@@ -42,9 +44,10 @@ class DCMTK {
 
 			let filterResults = (error, stdout, stderr) => {
 				if (finished) return;
-				if (error) {
+				if (error || !str) {
 					er(error);
 					resolve(null);
+					return;
 				}
 				let tags;
 				if (str.slice(-1) != '}') str += '"}}';

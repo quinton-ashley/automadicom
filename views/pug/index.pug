@@ -10,15 +10,14 @@ html
 		link(rel='stylesheet' type='text/css' href=node_modules + '/material-design-icons-iconfont/dist/material-design-icons.css')
 
 body.light
-	.container-fluid: .row.justify-content-center.p-2
-		#leftTab.col-12.p-0: .row
-			.col-9: .row
-				.col-12.pl-3: h4 Input Selection
+	.container-fluid: .row.justify-content-center.p-0
+		#leftTab.col-12.p-0: .row.pl-2.mr-0
+			.col-9.pr-2: .row.pt-2
 				.col-10.pr-1
 					input#inputPath.p-2(type='text' value='~/Documents/automadicom/input')
 				.col-2.pl-1
-					button#input.uie.btn.col Select
-				.col-12.pt-2: table#inputFilesTable.table(data-search="true" data-search-align="left" data-id-field="id" data-sort-name="id")
+					button#input.uie.btn.col Open
+				#studies.col-12.pt-2: table#studiesTable.table(data-search="true" data-search-align="left" data-id-field="id" data-sort-name="id")
 					thead: tr
 						th.collapse.hide(data-field="StudyInstanceUID" data-sortable="true") StudyInstanceUID
 						th(data-field="PatientID" data-sortable="true") PatientID
@@ -26,17 +25,17 @@ body.light
 						th(data-field="StudyDate" data-sortable="true") StudyDate
 						th(data-field="Modality" data-sortable="true") Modality
 						th(data-field="Laterality" data-sortable="true") Laterality
-					tbody#tags.border-top-0.border-bottom-0
-			.col-3.pl-0
-				.row: .col-12: h4 Files in Study
+					tbody.border-top-0.border-bottom-0
+				#options.col-12
+					#checkboxes.row.p-3
+					.row.pb-2
+						//- .col-4.p-0: button#viewAllTags.uie.tog.tog-l.disabled.p-1 Show All Tags
+						//- .col-4.p-0.pr-1: button#viewChanges.uie.tog.tog-r.p-1 Preview Changes Only
+						.col-6.pr-1: button.uie.btn.p-1: s Anonymization Options
+						.col-6.pl-1.pr-2: button#start.uie.btn.p-1 Start
+			#study.col-3.pl-2
+				.row.pt-2: .col-12
 				#images.row
-			#footer.col-12.fixed-bottom.px-4.py-2
-				#checkboxes.row
-				.row.pt-1
-					//- .col-4.p-0: button#viewAllTags.uie.tog.tog-l.disabled.p-1 Show All Tags
-					//- .col-4.p-0.pr-1: button#viewChanges.uie.tog.tog-r.p-1 Preview Changes Only
-					.col-6.px-0.pr-1: button.uie.btn.p-1 Anonymization Options
-					.col-6.px-0.pl-1: button#start.uie.btn.p-1 Start
 		#midTab.col-12.collapse
 			.row
 				.col-1: button#back.uie.tbar: i.material-icons arrow_back_ios

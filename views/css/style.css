@@ -263,12 +263,64 @@ h1 {
 	text-align: left;
 }
 
-#footer {
-	border-color: #000;
-	border-top: 1px;
+.form-check-label {
+	user-select: none;
 }
 
 .uie.table {
 	display: table-row;
 	text-align: left;
+}
+
+#options,
+#studies,
+#study {
+	border-width: 0;
+	border-color: #000;
+	border-radius: 0;
+}
+
+.dark #options,
+.dark #studies,
+.dark #study {
+	border-color: #ddd;
+}
+
+#studies {
+	overflow-y: scroll;
+}
+
+#options {
+	background-color: #eee;
+	position: absolute;
+	bottom: 0;
+}
+
+#study {
+	background-color: #ccc;
+	height: 100vh;
+	overflow: scroll;
+}
+
+.dark #options {
+	background-color: #333;
+}
+
+.dark #study {
+	background-color: #222;
+}
+
+.uie.table.selected {
+	background-color: #818c46;
+}
+
+.light table th,
+.light table tr,
+.light table tr td {
+	border-top: 1px solid #999!important;
+	border-bottom: 1px solid #999!important;
+}
+
+table tr td {
+	font-weight: 300;
 }

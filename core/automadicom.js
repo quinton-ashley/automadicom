@@ -121,7 +121,6 @@ class AutomaDicom {
 	async setInput(input) {
 		inDir = input || arg.i || arg.input || usrDir + '/input';
 
-		log('');
 		log('input: ' + inDir + '\n');
 		if (!(await fs.exists(inDir))) {
 			er('Input path does not exist!');

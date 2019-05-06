@@ -18,7 +18,7 @@ module.exports = async function(arg) {
 	let filesInfo = [];
 	let studies = {};
 
-	function themeChange(darkMode) {
+	function setTheme(darkMode) {
 		darkMode = darkMode || systemPreferences.isDarkMode();
 		if (darkMode) {
 			$('body').removeClass('light');
@@ -30,7 +30,7 @@ module.exports = async function(arg) {
 	}
 	if (mac) {
 		systemPreferences.subscribeNotification(
-			'AppleInterfaceThemeChangedNotification', themeChange);
+			'AppleInterfaceThemeChangedNotification', setTheme);
 	}
 
 	async function select(asg, type) {
@@ -79,6 +79,10 @@ module.exports = async function(arg) {
 		}
 	});
 
+	cui.setResize(() => {
+		$('#studies').height($(window).height() - $('#options').height() - 50);
+	});
+
 	async function loadOptions() {
 		let configs = automadicom.getConfigs();
 		let $checkboxes = $('#checkboxes');
@@ -90,6 +94,7 @@ module.exports = async function(arg) {
 			}));
 		}
 		cui.addView('checkboxes');
+		cui.resize();
 	}
 
 	async function selectInput(inDir) {
@@ -101,7 +106,7 @@ module.exports = async function(arg) {
 			tagsArr.push(tags);
 		}
 		printPaths(inFiles);
-		cui.addView('inputFilesTable');
+		cui.addView('studiesTable');
 		await loadFile(0, true);
 	}
 
@@ -131,12 +136,12 @@ module.exports = async function(arg) {
 		}
 		log(studies);
 
-		let $table = $('#inputFilesTable');
+		let $table = $('#studiesTable');
 		$table.bootstrapTable();
 		$table.bootstrapTable('load', filesInfo);
 		$('div.search input').eq(0).prop('placeholder', 'Search Studies');
 
-		let $rows = $('#inputFilesTable tbody tr');
+		let $rows = $('#studiesTable tbody tr');
 		$rows.addClass('uie table');
 		$rows.each(function(i) {
 			$(this).prop('id', 'study_' + filesInfo[i].StudyInstanceUID.replace(/\./g, '_'));
@@ -149,6 +154,8 @@ module.exports = async function(arg) {
 	}
 
 	function loadStudy(study) {
+		$('#studiesTable tbody tr').removeClass('selected');
+		$('#study_' + study.replace(/\./g, '_')).addClass('cursor selected');
 		$('#images').empty();
 		for (let i of studies[study]) {
 			$('#images').append(pug(`
@@ -164,17 +171,13 @@ module.exports = async function(arg) {
 			});
 			app.loadURLs([inFiles[i]]);
 		}
-		$('#images').append(pug(`
-.col-12.p-5
-.col-12.p-5
-`));
 		cui.addView('images');
 	}
 
 	async function loadFile(inputFileIndex, noTabSwitch) {
 		$('#inFile' + infidx).addClass('disabled');
-		$('#inFile' + inputFileIndex).removeClass('disabled');
 		infidx = inputFileIndex;
+		$('#inFile' + infidx).removeClass('disabled');
 		log(infidx);
 		tags = tagsArr[infidx];
 		tags = await automadicom.previewChanges(infidx, tags);
