@@ -125,7 +125,7 @@
   "name": "automadicom",
   "repository": {
     "type": "git",
-    "url": "https://github.com/quinton-ashley/automadicom.git"
+    "url": "git+https://github.com/quinton-ashley/automadicom.git"
   },
   "scripts": {
     "start": "electron .",
