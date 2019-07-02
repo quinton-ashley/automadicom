@@ -12,11 +12,11 @@
 
 const chalk = require('chalk'); // terminal text coloring library
 const CSV = require('csv-string'); // csv parser and stringifier
-const dcmtk = require(__rootDir + '/core/dcmtk.js'); // my nodejs dcmtk bindings library
+const dcmtk = require(__rootDir + '/core/dcmtk.js'); // my nodejs dcmtk library
 const deepExtend = require('deep-extend');
 const strSim = require('string-similarity'); // string similarity algorithm
 const {
-	render
+	renderPaths
 } = require('tree-from-paths');
 
 const er = (ror) => {
@@ -24,23 +24,18 @@ const er = (ror) => {
 }
 
 let version = require(__rootDir + '/package.json').version;
-let usrDir = os.homedir() + '/Documents/automadicom';
+global.usrDir = os.homedir() + '/Documents/automadicom';
 if (win) usrDir = path.nx(usrDir);
 
 let inDir;
-let inFiles; // input file paths
+let dcmFilePaths; // input file paths
 let fidx = 0; // the current file index
-
 let outDir;
 let outPaths = []; // the new path of the files
 
 let dict; // dictionary with tag key to value pairs
-
-let configs = {};
 let rules = {};
-
 let append = [];
-
 let failed = []; // files that failed
 
 var a = 0;
@@ -48,6 +43,7 @@ var a = 0;
 class AutomaDicom {
 	constructor() {
 		this.dictID;
+		this.configs = {};
 	}
 
 	async test() {
@@ -85,9 +81,9 @@ class AutomaDicom {
 	}
 
 	async start(arg) {
-		if (!inFiles) await this.setup();
+		if (!dcmFilePaths) await this.setup();
 
-		for (let i = 0; i < inFiles.length; i++) {
+		for (let i = 0; i < dcmFilePaths.length; i++) {
 			// try {
 			await this.edit(i);
 			// continue;
@@ -104,7 +100,7 @@ class AutomaDicom {
 		if (failed.length >= 1) {
 			er('failed for files:');
 			for (let fidx in failed) {
-				er(inFiles[fidx]);
+				er(dcmFilePaths[fidx]);
 			}
 		} else {
 			log(chalk.green('100% success'));
@@ -132,23 +128,23 @@ class AutomaDicom {
 			// looks for files with no extensions, because sometimes DICOM files
 			// will be improperly named
 			let allFiles = await klaw(inDir);
-			inFiles = [];
+			dcmFilePaths = [];
 			for (let file of allFiles) {
 				if (path.parse(file).base[0] != '.' &&
 					!(await fs.stat(file)).isDirectory() &&
 					file.match(/^(.*\.(dcm|bak)|.*\.\d+|.*(\/|\\)[^.]+)$/gmi)) {
-					inFiles.push(path.nx(file));
+					dcmFilePaths.push(path.nx(file));
 				}
 			}
 		} else {
-			inFiles = [inDir];
+			dcmFilePaths = [inDir];
 		}
-		if (inFiles === undefined || inFiles.length == 0) {
+		if (dcmFilePaths === undefined || dcmFilePaths.length == 0) {
 			er('invalid path, no files found');
 			return;
 		}
-		log(inFiles);
-		return inFiles;
+		log(dcmFilePaths);
+		return dcmFilePaths;
 	}
 
 	async setOutputDir(output) {
@@ -164,7 +160,7 @@ class AutomaDicom {
 			let config = await fs.readFile(file, 'utf8');
 			file = path.parse(file);
 			if (file.ext == '.json') {
-				configs[file.name] = JSON.parse(config);
+				this.configs[file.name] = JSON.parse(config);
 			} else {
 				append = CSV.parse(config, '\n');
 				for (let i in append) {
@@ -174,19 +170,34 @@ class AutomaDicom {
 		}
 	}
 
-	getConfigs() {
-		return configs;
+	async saveConfigFile(configName) {
+		let filePath = usrDir + '/config/';
+		filePath += configName.replace(/ /g, '_') + '.json';
+		delete this.configs[configName].enabled;
+		let file = JSON.stringify(this.configs[configName]);
+		await fs.outputFile(filePath, file);
+	}
+
+	isConfigEnabled(configName) {
+		if (!this.configs[configName]) {
+			log('config not found');
+			return null;
+		}
+		if (this.configs[configName].enabled == null) {
+			this.configs[configName].enabled = false;
+		}
+		return this.configs[configName].enabled;
 	}
 
 	toggleConfig(configName, enabled) {
-		configs[configName].enabled = enabled;
+		this.configs[configName].enabled = enabled;
 		log(configName + ' is ' + enabled);
 	}
 
 	getRules() {
 		rules = {};
-		for (let configName in configs) {
-			let config = configs[configName];
+		for (let configName in this.configs) {
+			let config = this.configs[configName];
 			if (!config.enabled) continue;
 			deepExtend(rules, config.rules);
 		}
@@ -274,17 +285,17 @@ class AutomaDicom {
 	// solve file arg ambivalence
 	_fileAmb(file) {
 		if (typeof file == 'string') {
-			fidx = inFiles.indexOf(file);
+			fidx = dcmFilePaths.indexOf(file);
 		} else {
 			fidx = file;
-			file = inFiles[fidx];
+			file = dcmFilePaths[fidx];
 		}
 		return file;
 	}
 
 	async getOutPath(file, tags, values) {
 		file = this._fileAmb(file);
-		// let's decide where to write the file!
+		// let's decide where to write the file
 		let dir, imgName;
 		let outPath = '';
 		if (outDir) {
@@ -365,7 +376,7 @@ class AutomaDicom {
 				}
 				reqTag = reqTag.replace('\u0000', '');
 			} else if (tagReq.includes('file')) {
-				reqTag = path.parse(inFiles[fidx]);
+				reqTag = path.parse(dcmFilePaths[fidx]);
 			} else if (tagReq == 'index') {
 				reqTag = fidx;
 			} else if (values[tagReq]) {
@@ -381,7 +392,6 @@ class AutomaDicom {
 		}
 		// note that eval is used to evaluate user javascript dynamically!
 		// direct access to String methods gives users advanced control
-		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String
 		let res;
 		try {
 			res = eval(rule);
@@ -429,11 +439,11 @@ Times must be entered as a String in a standard format, ex:'HHMMSS'
 
 	results() {
 		let res = '';
-		for (let i in inFiles) {
-			res += inFiles[i] + '\n';
+		for (let i in dcmFilePaths) {
+			res += dcmFilePaths[i] + '\n';
 			res += ((outPaths[i]) ? outPaths[i] : 'failed') + '\n';
 		}
-		let resTree = render(outPaths.filter((outPath) => {
+		let resTree = renderPaths(outPaths.filter((outPath) => {
 				return outPath;
 			}), outDir,
 			(parent, file, explicit) => {

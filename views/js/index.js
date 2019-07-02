@@ -10,17 +10,22 @@ module.exports = async function(arg) {
 	const automadicom = await require(__rootDir + '/core/automadicom.js');
 	const dwv = require('dwv');
 
-	let inFiles;
-	let infidx;
+	let prefsMan = require(__rootDir + '/prefs/prefsManager.js');
+	prefsMan.prefsPath = usrDir + '/_usr/prefs.json';
+	global.prefs = await prefsMan.load();
+	log(prefs);
 
-	let tags = [];
-	let tagsArr = [];
-	let filesInfo = [];
+	let dcmFilePaths;
+	let dcmIndex;
+
+	let dcmFiles = [];
 	let studies = {};
 
-	function setTheme(darkMode) {
-		darkMode = darkMode || systemPreferences.isDarkMode();
-		if (darkMode) {
+	let editor = {};
+
+	function setTheme(theme) {
+		prefs.ui.theme = theme;
+		if (theme == 'dark') {
 			$('body').removeClass('light');
 			$('body').addClass('dark');
 		} else {
@@ -31,6 +36,9 @@ module.exports = async function(arg) {
 	if (mac) {
 		systemPreferences.subscribeNotification(
 			'AppleInterfaceThemeChangedNotification', setTheme);
+		setTheme(systemPreferences.isDarkMode() ? 'dark' : 'light');
+	} else {
+		setTheme(prefs.ui.theme);
 	}
 
 	async function select(asg, type) {
@@ -39,9 +47,7 @@ module.exports = async function(arg) {
 		});
 		if (typeof x == 'undefined') return;
 		arg[asg] = x;
-		if (typeof x != 'string') {
-			x = x[0];
-		}
+		if (typeof x != 'string') x = x[0];
 		$('#' + asg + 'Path').val(x);
 		if (asg == 'input') await selectInput(x);
 		if (asg == 'output') await automadicom.setOutputDir(x);
@@ -54,6 +60,9 @@ module.exports = async function(arg) {
 			$('#' + cui.ui).hide();
 			$('#' + state).show();
 			$('#' + state + 'Toggle').removeClass('disabled');
+		}
+		if (cui.ui == 'rightTab') {
+			editConfig(editor.configName);
 		}
 	});
 
@@ -74,8 +83,20 @@ module.exports = async function(arg) {
 			await loadFile(Number(act.slice(-1)));
 		} else if (act.includes('study_')) {
 			await loadStudy(act.slice(6).replace(/_/g, '.'));
-		} else {
-			automadicom.toggleConfig(act, $('#' + act + ' input').is(':checked'));
+		} else if (act.includes('____checkbox')) {
+			let boxChecked = $('#' + act + ' input').is(':checked');
+			act = act.split('____checkbox')[0];
+			let configEnabled = automadicom.isConfigEnabled(act);
+			if (act != 'New_Custom_Config' && boxChecked != configEnabled) {
+				automadicom.toggleConfig(act, boxChecked);
+			} else {
+				log('editing config: ' + act);
+				$('#loader').show();
+				await delay(100);
+				await loadConfig(act);
+				cui.change('rightTab');
+				$('#loader').hide();
+			}
 		}
 	});
 
@@ -83,12 +104,76 @@ module.exports = async function(arg) {
 		$('#studies').height($(window).height() - $('#options').height() - 50);
 	});
 
+	async function editConfig(configName) {
+		let config = automadicom.configs[configName] || {};
+		let rules = config.rules || {};
+		let $table = $('#editorTable');
+		let data = editor.data;
+		log(data);
+		for (let row of data) {
+			if (row.value === '' || row.value === null) {
+				delete rules[row.tag];
+			} else {
+				rules[row.tag] = row.value;
+			}
+		}
+		if (!config.rules) {
+			log('new');
+			configName = $('#configName').prop('value').replace(/ /g, '_');
+			config.rules = rules;
+			automadicom.configs[configName] = config;
+			await loadOptions();
+		}
+		log(automadicom.configs[configName]);
+		await automadicom.saveConfigFile(configName);
+	}
+
+	async function loadConfig(configName) {
+		editor.configName = configName;
+		$('#configName').prop('value', configName.replace(/_/g, ' '));
+		let config = automadicom.configs[configName] || {};
+		let rules = config.rules || {};
+		let data = [];
+		for (let tagID in automadicom.dictID) {
+			let tagName = automadicom.dictID[tagID];
+			if (rules[tagName] === undefined) {
+				rules[tagName] = null;
+			}
+		}
+		for (let tagName in rules) {
+			data.push({
+				tag: tagName,
+				value: rules[tagName]
+			});
+		}
+		log(data);
+		editor.data = data;
+		let editFunc = function() {
+			$('#editor input').keyup(function(e) {
+				let val = $(this).prop('value');
+				log(val);
+				let name = $(this).parent().prev().html;
+				log(name);
+				let row = data.find(x => x.tag === name) || {};
+				row.value = val;
+				log(row);
+			});
+		};
+		let $table = $('#editorTable');
+		$table.bootstrapTable();
+		$table.bootstrapTable('showLoading');
+		$table.bootstrapTable('load', data);
+		$table.bootstrapTable('hideLoading');
+		$table.bootstrapTable('onSearch', editFunc);
+		editFunc();
+	}
+
 	async function loadOptions() {
-		let configs = automadicom.getConfigs();
 		let $checkboxes = $('#checkboxes');
+		$checkboxes.empty();
 		let checkboxTemplate = await fs.readFile(__rootDir +
 			'/views/pug/checkbox.pug');
-		for (let configName in configs) {
+		for (let configName in automadicom.configs) {
 			$checkboxes.append(pug(checkboxTemplate, {
 				id: configName
 			}));
@@ -98,38 +183,42 @@ module.exports = async function(arg) {
 	}
 
 	async function selectInput(inDir) {
-		inFiles = await automadicom.setInput(inDir);
-		infidx = 0;
-		tagsArr = [];
-		for (let file of inFiles) {
+		dcmFilePaths = await automadicom.setInput(inDir);
+		dcmIndex = 0;
+		dcmFiles = [];
+		let tags = [];
+		for (let file of dcmFilePaths) {
 			tags = await automadicom.getTags(file);
-			tagsArr.push(tags);
+			dcmFiles.push(tags);
 		}
-		printPaths(inFiles);
+		createStudiesTable(dcmFilePaths);
 		cui.addView('studiesTable');
 		await loadFile(0, true);
 	}
 
-	function getTagValue(name) {
+	function getTagValue(tags, name) {
 		return (tags.find(x => x.name === name) || {}).value || 'NOT FOUND';
 	}
 
-	function printPaths(files) {
-		filesInfo = [];
+	function createStudiesTable(files) {
+		let rowInfo = [];
 		studies = {};
 		for (let i in files) {
-			tags = tagsArr[i];
+			let tags = dcmFiles[i];
 			let info = {
 				Index: i
 			};
-			let uid = getTagValue('StudyInstanceUID');
+			let uid = getTagValue(tags, 'StudyInstanceUID');
 			info.StudyInstanceUID = uid;
-			if (!filesInfo.find(x => x.StudyInstanceUID === uid)) {
-				let names = ['PatientName', 'PatientID', 'StudyDate', 'Modality', 'Laterality'];
+			if (!rowInfo.find(x => x.StudyInstanceUID === uid)) {
+				let names = [
+					'PatientName', 'PatientID', 'StudyDate',
+					'Modality', 'Laterality'
+				];
 				for (let name of names) {
-					info[name] = getTagValue(name);
+					info[name] = getTagValue(tags, name);
 				}
-				filesInfo.push(info);
+				rowInfo.push(info);
 			}
 			studies[uid] = studies[uid] || [];
 			studies[uid].push(i);
@@ -138,19 +227,20 @@ module.exports = async function(arg) {
 
 		let $table = $('#studiesTable');
 		$table.bootstrapTable();
-		$table.bootstrapTable('load', filesInfo);
+		$table.bootstrapTable('load', rowInfo);
 		$('div.search input').eq(0).prop('placeholder', 'Search Studies');
 
 		let $rows = $('#studiesTable tbody tr');
 		$rows.addClass('uie table');
 		$rows.each(function(i) {
-			$(this).prop('id', 'study_' + filesInfo[i].StudyInstanceUID.replace(/\./g, '_'));
+			$(this).prop('id', 'study_' +
+				rowInfo[i].StudyInstanceUID.replace(/\./g, '_'));
 		});
 		// base function to get elements
 		dwv.gui.getElement = dwv.gui.base.getElement;
 		dwv.gui.displayProgress = function(percent) {};
 
-		loadStudy(filesInfo[0].StudyInstanceUID);
+		loadStudy(rowInfo[0].StudyInstanceUID);
 	}
 
 	function loadStudy(study) {
@@ -161,7 +251,7 @@ module.exports = async function(arg) {
 			$('#images').append(pug(`
 .col-12: .row
 	#dwv${i}.col-11: .layerContainer: canvas#dwvCanvas${i}.imageLayer
-	p.col-6 Image ${i}
+	p.col-6 ${getTagValue(dcmFiles[i], 'SeriesDescription')}
 	button.col-6#inFile${i}.uie.link Preview Edits
 `));
 			let app = new dwv.App();
@@ -169,27 +259,29 @@ module.exports = async function(arg) {
 				containerDivId: 'dwv' + i,
 				tools: ['Scroll']
 			});
-			app.loadURLs([inFiles[i]]);
+			app.loadURLs([dcmFilePaths[i]]);
 		}
 		cui.addView('images');
 	}
 
 	async function loadFile(inputFileIndex, noTabSwitch) {
-		$('#inFile' + infidx).addClass('disabled');
-		infidx = inputFileIndex;
-		$('#inFile' + infidx).removeClass('disabled');
-		log(infidx);
-		tags = tagsArr[infidx];
-		tags = await automadicom.previewChanges(infidx, tags);
+		$('#inFile' + dcmIndex).addClass('disabled');
+		dcmIndex = inputFileIndex;
+		$('#inFile' + dcmIndex).removeClass('disabled');
+		log(dcmIndex);
+		tags = dcmFiles[dcmIndex];
+		tags = await automadicom.previewChanges(dcmIndex, tags);
 
 		let $table = $('#tagsTable');
 		$table.bootstrapTable();
+		$table.bootstrapTable('showLoading');
 		$table.bootstrapTable('load', tags);
 		$('table.table').removeClass('table-bordered');
 		$('input.form-control').removeClass('form-control').addClass('p-2');
 		$('div.float-left.search').addClass('mt-0');
 		$table.bootstrapTable('hideColumn', 'pos');
 		$table.bootstrapTable('hideColumn', 'vr');
+		$table.bootstrapTable('hideLoading');
 		if (!noTabSwitch) {
 			cui.change('midTab');
 		}
@@ -200,12 +292,14 @@ module.exports = async function(arg) {
 		v: true
 	});
 
+	$('#loader').show();
 	await automadicom.test();
 	await automadicom.setup();
 	await loadOptions();
 	await selectInput();
+	$('#loader').hide();
 
-	// function printPaths(files) {
+	// function createStudiesTable(files) {
 	// 	let res = {};
 	// 	for (let file of files) {
 	// 		file = path.relative(automadicom.getInputDir(), file);
@@ -213,22 +307,23 @@ module.exports = async function(arg) {
 	// 		file.split('/').reduce((o, k) => o[k] = o[k] || {}, res);
 	// 	}
 	// 	log(res);
-	// 	$('#loadInFiles').empty();
-	// 	_printPaths(res, 0);
+	// 	$('#loaddcmFilePaths').empty();
+	// 	_createStudiesTable(res, 0);
 	// }
 	//
-	// function _printPaths(files, level) {
+	// function _createStudiesTable(files, level) {
 	// 	for (let i in files) {
 	// 		if ($.isEmptyObject(files[i])) {
-	// 			let x = pug(`#inFile${infidx++}.uie.link.disabled ` + '/ '.repeat(level) + i);
-	// 			$('#loadInFiles').append(x);
+	// 			let x = pug(`#inFile${dcmIndex++}.uie.link.disabled ` +
+	// 				'/ '.repeat(level) + i);
+	// 			$('#loaddcmFilePaths').append(x);
 	// 		} else {
 	// 			let x = pug('div ' + '/ '.repeat(level) + i);
-	// 			$('#loadInFiles').append(x);
-	// 			_printPaths(files[i], level + 1);
+	// 			$('#loaddcmFilePaths').append(x);
+	// 			_createStudiesTable(files[i], level + 1);
 	// 		}
 	// 		if (i >= 20) {
-	// 			$('#loadInFiles').append(pug('p ...'));
+	// 			$('#loaddcmFilePaths').append(pug('p ...'));
 	// 			break;
 	// 		}
 	// 	}

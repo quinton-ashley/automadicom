@@ -315,12 +315,78 @@ h1 {
 }
 
 .light table th,
-.light table tr,
-.light table tr td {
+table tr,
+table tr td,
+table tr:hover td {
 	border-top: 1px solid #999!important;
 	border-bottom: 1px solid #999!important;
 }
 
+.dark table tr.selected td {
+	background-color: #444!important;
+}
+
 table tr td {
 	font-weight: 300;
+}
+
+.dark table tr:hover td {
+	background-color: rgba(255,255,255,.3)!important;
+}
+
+table tr:hover * {
+	background-color: transparent!important;
+}
+
+#loader {
+	position: absolute;
+	width: 100vw;
+	height: 100vh;
+	z-index: 1000;
+	background: radial-gradient(circle, rgba(255,255,255,.1) 0%, rgba(0,0,0,1) 100%);
+}
+
+.loader {
+	display: block;
+	border-radius: 50%;
+	width: 100vw;
+	height: 100vh;
+	background: rgba(0, 0, 0, .2);
+	position: absolute;
+	z-index: 10;
+	transform: scale(0.2);
+}
+
+.loader span {
+	position: absolute;
+	background: gray;
+	opacity: 0.1;
+	width: 100vw;
+	height: 100vh;
+	top: 0;
+	left: 0;
+	border-radius: 50%;
+}
+
+.loader span:nth-child(1) {
+	-webkit-animation: growDot 1s alternate 0s infinite;
+}
+
+.loader span:nth-child(2) {
+	-webkit-animation: growDot 1s alternate 0.2s infinite;
+}
+
+.loader span:nth-child(3) {
+	-webkit-animation: growDot 1s alternate 0.4s infinite;
+}
+@-webkit-keyframes growDot {
+	0% {
+		-webkit-transform: scale(0);
+		z-index: 5;
+	}
+
+	100% {
+		-webkit-transform: scale(1);
+		z-index: 2;
+	}
 }

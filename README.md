@@ -10,6 +10,12 @@ This is the main view of automadicom.  Click on a study from the table of studie
 
 ![preview edits](https://raw.githubusercontent.com/quinton-ashley/automadicom-img/master/preview_edits.png)
 
+## Features
+
+-   fully customizable config files
+-   support for macOS dark mode with light and dark themes
+-   automatically checks disk for free space to prevent overflow
+
 ## User Defaults
 
 Default file location: `~/Documents/automadicom`
