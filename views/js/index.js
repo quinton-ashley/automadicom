@@ -152,7 +152,7 @@ module.exports = async function(arg) {
 			$('#editor input').keyup(function(e) {
 				let val = $(this).prop('value');
 				log(val);
-				let name = $(this).parent().prev().html;
+				let name = $(this).parent().prev().html();
 				log(name);
 				let row = data.find(x => x.tag === name) || {};
 				row.value = val;
@@ -164,7 +164,7 @@ module.exports = async function(arg) {
 		$table.bootstrapTable('showLoading');
 		$table.bootstrapTable('load', data);
 		$table.bootstrapTable('hideLoading');
-		$table.bootstrapTable('onSearch', editFunc);
+		// $table.bootstrapTable('onSearch', editFunc);
 		editFunc();
 	}
 
