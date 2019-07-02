@@ -1,10 +1,10 @@
 {
   "author": "Quinton Ashley",
   "bin": {
-    "automaDICOM": "./bin/automadicom.js"
+    "automadicom": "./bin/automadicom.js"
   },
   "bugs": {
-    "url": "https://github.com/quinton-ashley/automaDICOM/issues"
+    "url": "https://github.com/quinton-ashley/automadicom/issues"
   },
   "build": {
     "appId": "com.qashto.automadicom",
@@ -125,7 +125,7 @@
   "name": "automadicom",
   "repository": {
     "type": "git",
-    "url": "https://github.com/quinton-ashley/automaDICOM.git"
+    "url": "https://github.com/quinton-ashley/automadicom.git"
   },
   "scripts": {
     "start": "electron .",
@@ -142,5 +142,5 @@
     "postversion": "git push",
     "V": "git push origin $npm_package_version && npm publish"
   },
-  "version": "0.5.42"
+  "version": "0.5.43"
 }
