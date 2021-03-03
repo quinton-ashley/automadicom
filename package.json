@@ -97,7 +97,7 @@
     "mousetrap": "^1.6.3",
     "open": "^6.2.0",
     "popper.js": "^1.15.0",
-    "pug": "^2.0.0-rc.3",
+    "pug": "^3.0.1",
     "recursive-search": "^1.0.1",
     "server-destroy": "^1.0.1",
     "string-similarity": "^3.0.0",
